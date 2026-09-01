@@ -1,0 +1,5 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.envdata/flights_segments_data.json
