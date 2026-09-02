@@ -2,4 +2,7 @@ venv/
 .venv/
 __pycache__/
 *.pyc
-.envdata/flights_segments_data.json
+.env
+
+data/
+flights_segments_data.json

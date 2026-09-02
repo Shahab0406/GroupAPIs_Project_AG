@@ -14,9 +14,11 @@ class Command(BaseCommand):
             flights = json.load(file)
         count = 0
 
+        flight_list = []
+
         for flight in flights:
             
-            Flight.objects.create(
+            flight = Flight(
                 flight_number=flight["flight_number"],
                 arrival_datetime=datetime.fromisoformat(
                     flight["arrival_datetime"]
@@ -31,7 +33,9 @@ class Command(BaseCommand):
             )
             count += 1
             print(f"Inserted flight : {count}")
+            flight_list.append(flight)
 
+        Flight.objects.bulk_create(flight_list)
         self.stdout.write(
             self.style.SUCCESS(
                 f"Successfully imported {len(flights)} flights."
