@@ -66,4 +66,4 @@ class SegmentsResearchAdmin(admin.ModelAdmin):
     search_fields = ("flight_number",)
 
     class Media:
-        js = ("management/JS/autofill_flight.js",)
+        js = ("admin/js/autofill_flight.js",)
