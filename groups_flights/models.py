@@ -20,7 +20,7 @@ class Group(models.Model):
     selling_price_per_seat_child = models.DecimalField(max_digits=10, decimal_places=2)
     selling_price_per_seat_infant = models.DecimalField(max_digits=10, decimal_places=2)
 
-    pnr = models.CharField(max_length=20)
+    pnr = models.CharField(max_length=20, unique=True)
     is_active = models.BooleanField(default=True)
     is_published = models.BooleanField(default=False)
 
@@ -41,7 +41,7 @@ class Flight(models.Model):
         related_name="flights",
     )
 
-    flight_number = models.CharField(max_length=20,unique=True)
+    flight_number = models.CharField(max_length=20)
     departure_datetime = models.DateTimeField()
     sector_from = models.CharField(max_length=3)
     arrival_datetime = models.DateTimeField()
@@ -54,6 +54,14 @@ class Flight(models.Model):
     )
     baggage_allowance = models.CharField(max_length=100)
     meal_available = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["group", "flight_number", "departure_datetime"],
+                name="unique_flight_per_group_departure",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.flight_number} ({self.sector_from} → {self.sector_to})"
