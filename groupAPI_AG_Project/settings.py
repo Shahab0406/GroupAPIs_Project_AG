@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'groupAPIs_AG.apps.GroupapisConfig',
+    'groups_flights.apps.GroupsFlightsConfig',
 ]
 
 MIDDLEWARE = [
