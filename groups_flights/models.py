@@ -41,7 +41,7 @@ class Flight(models.Model):
         related_name="flights",
     )
 
-    flight_number = models.CharField(max_length=20)
+    flight_number = models.CharField(max_length=20,unique=True)
     departure_datetime = models.DateTimeField()
     sector_from = models.CharField(max_length=3)
     arrival_datetime = models.DateTimeField()
