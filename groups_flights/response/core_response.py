@@ -6,8 +6,7 @@ from typing import Any, Dict, Optional
 from dataclasses_json import dataclass_json
 from django.http import HttpResponse
 
-
-
+from groups_flights.response.typings import TypedResponse
 class CoreStatus(Enum):
     Success = 1
     Error = 101
