@@ -11,9 +11,9 @@ class FlightResponse:
     id: int
     flight_number: str
     departure_datetime: datetime
-    sector_from: str
+    origin: str
     arrival_datetime: datetime
-    sector_to: str
+    destination: str
     travel_class: str
     baggage_allowance: str
     meal_available: bool
@@ -24,9 +24,9 @@ class FlightResponse:
             id=flight.id,
             flight_number=flight.flight_number,
             departure_datetime=flight.departure_datetime,
-            sector_from=flight.origin,
+            origin=flight.origin,
             arrival_datetime=flight.arrival_datetime,
-            sector_to=flight.destination,
+            destination=flight.destination,
             travel_class=flight.travel_class,
             baggage_allowance=flight.baggage_allowance,
             meal_available=flight.meal_available,

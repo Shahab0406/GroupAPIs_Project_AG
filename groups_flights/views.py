@@ -14,7 +14,7 @@ def group_list(request):
         message="Groups retrieved successfully.",
         data={
             "count": len(groups_data),
-            "results": groups_data,
+            "groups": groups_data,
         },
     )
 
