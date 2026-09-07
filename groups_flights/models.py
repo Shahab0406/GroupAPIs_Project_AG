@@ -24,6 +24,9 @@ class Group(models.Model):
     is_active = models.BooleanField(default=True)
     is_published = models.BooleanField(default=False)
 
+    class meta:
+        db_table = "groups"
+        
     def __str__(self):
         return self.group_name
 
@@ -43,9 +46,9 @@ class Flight(models.Model):
 
     flight_number = models.CharField(max_length=20)
     departure_datetime = models.DateTimeField()
-    sector_from = models.CharField(max_length=3)
+    origin = models.CharField(max_length=3)
     arrival_datetime = models.DateTimeField()
-    sector_to = models.CharField(max_length=3)
+    destination = models.CharField(max_length=3)
 
     travel_class = models.CharField(
         max_length=20,
@@ -62,6 +65,26 @@ class Flight(models.Model):
                 name="unique_flight_per_group_departure",
             ),
         ]
+        db_table = "flights"
 
     def __str__(self):
-        return f"{self.flight_number} ({self.sector_from} → {self.sector_to})"
+        return f"{self.flight_number} ({self.from_origin} → {self.to_destination})"
+
+
+class Segment(models.Model):
+    flight_number = models.CharField(max_length=20)
+
+    arrival_datetime = models.DateTimeField()
+    departure_datetime = models.DateTimeField()
+
+    origin = models.CharField(max_length=3)
+    destination = models.CharField(max_length=3)
+
+    operating_airline = models.CharField(max_length=3)
+    marketing_airline = models.CharField(max_length=3)
+
+    class Meta:
+        db_table = "segments"
+    def __str__(self):
+        return self.flight_number
+    

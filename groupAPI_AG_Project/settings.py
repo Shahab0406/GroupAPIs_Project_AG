@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'groupAPIs_AG.apps.GroupapisConfig',
+    # 'groupAPIs_AG.apps.GroupapisConfig',
     'groups_flights.apps.GroupsFlightsConfig',
 ]
 
@@ -69,7 +69,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'groupAPIs_AG.wsgi.application'
+WSGI_APPLICATION = 'groupAPI_AG_Project.wsgi.application'
 
 
 # Database
