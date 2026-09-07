@@ -1,7 +1,9 @@
 from django.urls import path
-from groups_flights.views import flight_info_api
+
+from .views import flight_info_api, group_detail, group_list
 
 urlpatterns = [
-    # ... your existing URL patterns
-    path("api/flight-info/", flight_info_api, name="flight_info_api"),
+    path("groups/", group_list, name="group-list"),
+    path("groups/<int:pk>/", group_detail, name="group-detail"),
+    path("flight-info/", flight_info_api, name="flight-info"),
 ]

@@ -28,16 +28,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     return response.json();
                 })
                 .then(data => {
-                    if (data.success) {
+                    if (data.success && data.data) {
+                        const segment = data.data;
+
                         // Sector fields
-                        setFieldValue('origin', data.origin);
-                        setFieldValue('destination', data.destination);
+                        setFieldValue('origin', segment.origin);
+                        setFieldValue('destination', segment.destination);
 
                         // Split DateTime fields (Date = _0, Time = _1)
-                        setFieldValue('departure_datetime_0', data.departure_date);
-                        setFieldValue('departure_datetime_1', data.departure_time);
-                        setFieldValue('arrival_datetime_0', data.arrival_date);
-                        setFieldValue('arrival_datetime_1', data.arrival_time);
+                        setFieldValue('departure_datetime_0', segment.departure_date);
+                        setFieldValue('departure_datetime_1', segment.departure_time);
+                        setFieldValue('arrival_datetime_0', segment.arrival_date);
+                        setFieldValue('arrival_datetime_1', segment.arrival_time);
                     }
                 })
                 .catch(err => console.error('Flight Autofill Error:', err));
