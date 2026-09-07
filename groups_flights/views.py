@@ -1,3 +1,11 @@
-from django.shortcuts import render
+from .services import GroupService
 
-# Create your views here.
+group_service = GroupService()
+
+
+def group_list(request):
+    return group_service.list_groups()
+
+
+def group_detail(request, pk):
+    return group_service.get_group(pk)
