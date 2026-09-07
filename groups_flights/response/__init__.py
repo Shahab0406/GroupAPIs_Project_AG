@@ -1,6 +1,7 @@
 from .core_response import CoreResponse, CoreResponseData, CoreStatus
 from .flight import FlightResponse
 from .group import GroupResponse
+from .segment import SegmentResponse
 
 __all__ = [
     "CoreResponse",
@@ -8,4 +9,5 @@ __all__ = [
     "CoreStatus",
     "FlightResponse",
     "GroupResponse",
+    "SegmentResponse",
 ]

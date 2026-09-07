@@ -1,12 +1,10 @@
 from http import HTTPStatus
 
-from django.http import JsonResponse
-
-from .models import Segment
 from .response import CoreResponse, CoreStatus
-from .services import GroupService
+from .services import GroupService, SegmentService
 
 group_service = GroupService()
+segment_service = SegmentService()
 
 
 def group_list(request):
@@ -44,48 +42,28 @@ def flight_info_api(request):
     flight_number = request.GET.get("flight_number", "").strip()
 
     if not flight_number:
-        return JsonResponse(
-            {"success": False, "error": "No flight number provided"},
-            status=400,
+        response = CoreResponse.generate_response(
+            success=False,
+            message="No flight number provided.",
+            status=CoreStatus.Error.value,
+            data={},
+            error={"detail": "flight_number query parameter is required."},
         )
+        return CoreResponse.send_error_response(response, status=HTTPStatus.BAD_REQUEST)
 
-    segment = Segment.objects.filter(flight_number=flight_number).first()
+    segment_data = segment_service.get_segment_by_flight_number(flight_number)
 
-    if not segment:
-        return JsonResponse(
-            {"success": False, "error": "Flight segment not found"},
-            status=404,
+    if segment_data is None:
+        response = CoreResponse.generate_response(
+            success=False,
+            message="Flight segment not found.",
+            status=CoreStatus.Error.value,
+            data={},
+            error={"detail": f"No segment exists with flight number {flight_number}."},
         )
+        return CoreResponse.send_error_response(response, status=HTTPStatus.NOT_FOUND)
 
-    departure_date = (
-        segment.departure_datetime.strftime("%Y-%m-%d")
-        if segment.departure_datetime
-        else ""
-    )
-    departure_time = (
-        segment.departure_datetime.strftime("%H:%M:%S")
-        if segment.departure_datetime
-        else ""
-    )
-    arrival_date = (
-        segment.arrival_datetime.strftime("%Y-%m-%d")
-        if segment.arrival_datetime
-        else ""
-    )
-    arrival_time = (
-        segment.arrival_datetime.strftime("%H:%M:%S")
-        if segment.arrival_datetime
-        else ""
-    )
-
-    return JsonResponse(
-        {
-            "success": True,
-            "origin": segment.origin,
-            "destination": segment.destination,
-            "departure_date": departure_date,
-            "departure_time": departure_time,
-            "arrival_date": arrival_date,
-            "arrival_time": arrival_time,
-        }
+    return CoreResponse.success_response(
+        message="Flight segment retrieved successfully.",
+        data=segment_data,
     )
