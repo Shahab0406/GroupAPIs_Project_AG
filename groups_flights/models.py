@@ -68,7 +68,7 @@ class Flight(models.Model):
         db_table = "flights"
 
     def __str__(self):
-        return f"{self.flight_number} ({self.from_origin} → {self.to_destination})"
+        return f"{self.flight_number} ({self.origin} → {self.destination})"
 
 
 class Segment(models.Model):

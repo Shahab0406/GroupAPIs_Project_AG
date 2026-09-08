@@ -1,7 +1,11 @@
 from http import HTTPStatus
-
+from django.contrib.admin.views.decorators import staff_member_required
 from .response import CoreResponse, CoreStatus
 from .services import GroupService, SegmentService
+from django.contrib.auth.decorators import login_required, user_passes_test
+
+def is_superuser_and_staff(user):
+    return user.is_authenticated and user.is_superuser and user.is_staff
 
 group_service = GroupService()
 segment_service = SegmentService()
@@ -37,7 +41,8 @@ def group_detail(request, pk):
         data=group_data,
     )
 
-
+@login_required
+@user_passes_test(is_superuser_and_staff)
 def flight_info_api(request):
     flight_number = request.GET.get("flight_number", "").strip()
 
