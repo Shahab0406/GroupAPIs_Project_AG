@@ -8,18 +8,6 @@ from .models import Flight, Segment
 
 from .models import Flight, Group , Segment
 
-# Temporarily allow any logged-in active user to access Django Admin
-# 1. Bypass the is_staff requirement on the login form
-AdminAuthenticationForm.confirm_login_allowed = (
-    lambda self, user: None if user.is_active else None
-)
-
-# 2. Bypass the is_staff requirement on the admin site pages
-admin.site.has_permission = lambda request: (
-    request.user.is_authenticated
-    and request.user.is_active
-    and (request.user.is_staff or request.user.is_superuser)
-)
 
 class FlightAdminForm(forms.ModelForm):
 
