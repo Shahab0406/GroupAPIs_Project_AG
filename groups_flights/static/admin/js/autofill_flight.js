@@ -57,12 +57,9 @@
 
                 // Departure Datetime
                 const dep = parseDateTime(segment.departure_datetime || segment.departure_date);
-                setFieldValue('departure_datetime_0', segment.departure_date || dep.date);
                 setFieldValue('departure_datetime_1', segment.departure_time || dep.time);
-
                 // Arrival Datetime
                 const arr = parseDateTime(segment.arrival_datetime || segment.arrival_date);
-                setFieldValue('arrival_datetime_0', segment.arrival_date || arr.date);
                 setFieldValue('arrival_datetime_1', segment.arrival_time || arr.time);
             }
         })

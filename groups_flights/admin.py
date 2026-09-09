@@ -53,24 +53,15 @@ class FlightAdminForm(forms.ModelForm):
                     # Split datetime handling (_0 = Date, _1 = Time)
                     if segment.departure_datetime:
                         data.setdefault(
-                            f"{prefix}departure_datetime_0",
-                            segment.departure_datetime.strftime("%Y-%m-%d"),
-                        )
-                        data.setdefault(
                             f"{prefix}departure_datetime_1",
                             segment.departure_datetime.strftime("%H:%M:%S"),
                         )
 
                     if segment.arrival_datetime:
                         data.setdefault(
-                            f"{prefix}arrival_datetime_0",
-                            segment.arrival_datetime.strftime("%Y-%m-%d"),
-                        )
-                        data.setdefault(
                             f"{prefix}arrival_datetime_1",
                             segment.arrival_datetime.strftime("%H:%M:%S"),
                         )
-
                     self.data = data
 
 #=================================================================================================================================================================
