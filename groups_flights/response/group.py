@@ -12,8 +12,10 @@ from .serialize import to_json_dict
 class GroupResponse:
     id: int
     group_name: str
-    seats: int
+    adult_seats: int
+    available_adult_seats: int
     child_seats: int
+    available_child_seats: int
     token_payment_deadline: datetime
     full_payment_deadline: datetime
     token_amount: Decimal
@@ -35,8 +37,10 @@ class GroupResponse:
         return cls(
             id=group.id,
             group_name=group.group_name,
-            seats=group.seats,
+            adult_seats=group.adult_seats,
+            available_adult_seats=group.available_adult_seats,
             child_seats=group.child_seats,
+            available_child_seats=group.available_child_seats,
             token_payment_deadline=group.token_payment_deadline,
             full_payment_deadline=group.full_payment_deadline,
             token_amount=group.token_amount,

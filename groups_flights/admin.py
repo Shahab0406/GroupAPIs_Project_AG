@@ -1,7 +1,7 @@
 from django.contrib import admin 
 from django import forms
 
-from .models import Flight, Group , Segment
+from .models import Flight, Group, GroupBookingDetail, Segment
 
 class FlightAdminForm(forms.ModelForm):
 
@@ -117,8 +117,10 @@ class GroupAdmin(admin.ModelAdmin):
     list_display = (
         "group_name",
         "pnr",
-        "seats",
+        "adult_seats",
+        "available_adult_seats",
         "child_seats",
+        "available_child_seats",
         "is_active",
         "is_published",
     )
@@ -127,6 +129,22 @@ class GroupAdmin(admin.ModelAdmin):
     inlines = [FlightInline]
 
 
+
+
+@admin.register(GroupBookingDetail)
+class GroupBookingDetailAdmin(admin.ModelAdmin):
+    list_display = (
+        "group",
+        "flight",
+        "status",
+        "adult_seats_requested",
+        "child_seats_requested",
+        "total_amount",
+        "token_payment_deadline",
+        "full_payment_deadline",
+    )
+    list_filter = ("status",)
+    search_fields = ("group__group_name", "group__pnr")
 
 
 @admin.register(Segment)
