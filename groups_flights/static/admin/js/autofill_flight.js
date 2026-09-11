@@ -1,48 +1,81 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Event delegation to catch changes on both main form and dynamically added inline rows
-    document.addEventListener('change', function(event) {
-        const input = event.target;
+(function() {
+    console.log("=== AUTOFILL SCRIPT INITIALIZED ===");
 
-        // Check if the changed element is a flight_number field
-        if (input && input.id && input.id.endsWith('flight_number')) {
-            const flightNumber = input.value.trim();
-            if (!flightNumber) return;
+    function triggerAutofill(input) {
+        const flightNumber = input.value.trim();
+        if (!flightNumber) return;
 
-            // Extract row prefix (e.g., 'id_' or 'id_flights-0-')
-            const prefix = input.id.substring(0, input.id.lastIndexOf('flight_number'));
+        console.log("Processing flight number:", flightNumber);
 
-            // Helper function to safely set field value by field name
-            const setFieldValue = (fieldName, value) => {
-                const element = document.getElementById(prefix + fieldName);
-                if (element && value) {
-                    element.value = value;
-                }
-            };
+        // Find prefix (e.g., 'id_' for standard form, 'id_flights-0-' for inlines)
+        const inputId = input.id;
+        const prefix = inputId.substring(0, inputId.lastIndexOf('flight_number'));
 
-            // Fetch flight details from your API
-            fetch(`/api/flight-info/?flight_number=${encodeURIComponent(flightNumber)}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response failed');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success && data.data) {
-                        const segment = data.data;
+        const setFieldValue = (fieldName, value) => {
+            if (value === undefined || value === null) return;
+            const targetId = prefix + fieldName;
+            const el = document.getElementById(targetId);
+            if (el) {
+                el.value = value;
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                console.log(`Updated ${targetId} -> ${value}`);
+            }
+        };
 
-                        // Sector fields
-                        setFieldValue('origin', segment.origin);
-                        setFieldValue('destination', segment.destination);
+        const parseDateTime = (dtStr) => {
+            if (!dtStr) return { date: '', time: '' };
+            const str = String(dtStr);
+            const [date, fullTime] = str.includes('T') ? str.split('T') : str.split(' ');
+            const time = fullTime ? fullTime.substring(0, 8) : '';
+            return { date: date || '', time: time || '' };
+        };
 
-                        // Split DateTime fields (Date = _0, Time = _1)
-                        setFieldValue('departure_datetime_0', segment.departure_date);
-                        setFieldValue('departure_datetime_1', segment.departure_time);
-                        setFieldValue('arrival_datetime_0', segment.arrival_date);
-                        setFieldValue('arrival_datetime_1', segment.arrival_time);
-                    }
-                })
-                .catch(err => console.error('Flight Autofill Error:', err));
+        const apiUrl = `/api/flight-info/?flight_number=${encodeURIComponent(flightNumber)}`;
+        console.log("Fetching from API:", apiUrl);
+
+        fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        })
+        .then(response => {
+            const segment = response.data || response;
+            if (segment) {
+                console.log("Segment data received:", segment);
+
+                // Origin & Destination
+                setFieldValue('origin', segment.origin);
+                setFieldValue('destination', segment.destination);
+
+                // Departure Datetime
+                const dep = parseDateTime(segment.departure_datetime || segment.departure_date);
+                setFieldValue('departure_datetime_1', segment.departure_time || dep.time);
+                // Arrival Datetime
+                const arr = parseDateTime(segment.arrival_datetime || segment.arrival_date);
+                setFieldValue('arrival_datetime_1', segment.arrival_time || arr.time);
+            }
+        })
+        .catch(err => console.error("Autofill fetch error:", err));
+    }
+
+    // Attach delegated event listeners
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id && e.target.id.includes('flight_number')) {
+            triggerAutofill(e.target);
         }
     });
-});
+
+    document.addEventListener('focusout', function(e) {
+        if (e.target && e.target.id && e.target.id.includes('flight_number')) {
+            triggerAutofill(e.target);
+        }
+    });
+})();
