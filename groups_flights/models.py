@@ -1,10 +1,18 @@
 from django.db import models
 
+from groups_flights.utils import BookingStatus, TravelClass
+
 
 class Group(models.Model):
     group_name = models.CharField(max_length=255)
-    seats = models.PositiveIntegerField(help_text="Number of seats available")
-    child_seats = models.PositiveIntegerField(help_text="Number of child seats available")
+    adult_seats = models.PositiveIntegerField(help_text="Total number of adult seats in the group")
+    available_adult_seats = models.PositiveIntegerField(
+        help_text="Adult seats currently available for booking",
+    )
+    child_seats = models.PositiveIntegerField(help_text="Total number of child seats in the group")
+    available_child_seats = models.PositiveIntegerField(
+        help_text="Child seats currently available for booking",
+    )
 
     token_payment_deadline = models.DateTimeField()
     full_payment_deadline = models.DateTimeField()
@@ -24,20 +32,45 @@ class Group(models.Model):
     is_active = models.BooleanField(default=True)
     is_published = models.BooleanField(default=False)
 
-    class meta:
+    class Meta:
         db_table = "groups"
-        
+
     def __str__(self):
         return self.group_name
 
 
-class Flight(models.Model):
-    class TravelClass(models.TextChoices):
-        ECONOMY = "economy", "Economy"
-        PREMIUM_ECONOMY = "premium_economy", "Premium Economy"
-        BUSINESS = "business", "Business"
-        FIRST = "first", "First"
+class GroupBookingDetail(models.Model):
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.CASCADE,
+        related_name="booking_details",
+    )
+    flight = models.ForeignKey(
+        "Flight",
+        on_delete=models.CASCADE,
+        related_name="booking_details",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=BookingStatus.choices,
+        default=BookingStatus.ON_HOLD,
+    )
+    adult_seats_requested = models.PositiveIntegerField(default=0)
+    child_seats_requested = models.PositiveIntegerField(default=0)
+    adult_price_per_seat = models.DecimalField(max_digits=10, decimal_places=2)
+    child_price_per_seat = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    token_payment_deadline = models.DateTimeField()
+    full_payment_deadline = models.DateTimeField()
 
+    class Meta:
+        db_table = "group_booking_details"
+
+    def __str__(self):
+        return f"{self.group.group_name} booking ({self.status})"
+
+
+class Flight(models.Model):
     group = models.ForeignKey(
         Group,
         on_delete=models.CASCADE,
@@ -85,6 +118,6 @@ class Segment(models.Model):
 
     class Meta:
         db_table = "segments"
+
     def __str__(self):
         return self.flight_number
-    

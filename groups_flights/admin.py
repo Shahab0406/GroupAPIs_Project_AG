@@ -6,7 +6,7 @@ from django.contrib.admin.forms import AdminAuthenticationForm
 from django.contrib.admin.widgets import AdminSplitDateTime
 from .models import Flight, Segment
 
-from .models import Flight, Group , Segment
+from .models import Flight, Group, GroupBookingDetail, Segment
 
 
 class FlightAdminForm(forms.ModelForm):
@@ -124,8 +124,10 @@ class GroupAdmin(admin.ModelAdmin):
     list_display = (
         "group_name",
         "pnr",
-        "seats",
+        "adult_seats",
+        "available_adult_seats",
         "child_seats",
+        "available_child_seats",
         "is_active",
         "is_published",
     )
@@ -135,6 +137,22 @@ class GroupAdmin(admin.ModelAdmin):
     def get_media(self, request):
         media = super().get_media(request)
         return get_permission_media(media, request)
+
+
+@admin.register(GroupBookingDetail)
+class GroupBookingDetailAdmin(admin.ModelAdmin):
+    list_display = (
+        "group",
+        "flight",
+        "status",
+        "adult_seats_requested",
+        "child_seats_requested",
+        "total_amount",
+        "token_payment_deadline",
+        "full_payment_deadline",
+    )
+    list_filter = ("status",)
+    search_fields = ("group__group_name", "group__pnr")
 
 
 @admin.register(Segment)
