@@ -130,9 +130,8 @@ class GroupAdmin(admin.ModelAdmin):
         "child_seats",
         "available_child_seats",
         "is_active",
-        "is_published",
     )
-    list_filter = ("is_active", "is_published")
+    list_filter = ("is_active",)
     search_fields = ("group_name", "pnr")
 
     def get_media(self, request):
@@ -144,7 +143,6 @@ class GroupAdmin(admin.ModelAdmin):
 class GroupBookingDetailAdmin(admin.ModelAdmin):
     list_display = (
         "group",
-        "flight",
         "status",
         "adult_seats_requested",
         "child_seats_requested",

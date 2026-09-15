@@ -32,5 +32,19 @@ class FlightResponse:
             meal_available=flight.meal_available,
         )
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "FlightResponse":
+        return cls(
+            id=data["id"],
+            flight_number=data["flight_number"],
+            departure_datetime=data["departure_datetime"],
+            origin=data["origin"],
+            arrival_datetime=data["arrival_datetime"],
+            destination=data["destination"],
+            travel_class=data["travel_class"],
+            baggage_allowance=data["baggage_allowance"],
+            meal_available=data["meal_available"],
+        )
+
     def to_dict(self) -> dict:
         return to_json_dict(asdict(self))

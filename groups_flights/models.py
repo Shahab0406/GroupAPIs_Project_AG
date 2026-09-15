@@ -1,6 +1,21 @@
 from django.db import models, transaction
 
+from groups_flights.cache import GroupCache
 from groups_flights.utils import BookingStatus, TravelClass
+
+GROUP_CACHE_INVALIDATE_FIELDS = {
+    "buying_currency",
+    "buying_price_per_seat_adult",
+    "buying_price_per_seat_child",
+    "buying_price_per_seat_infant",
+    "selling_currency",
+    "selling_price_per_seat_adult",
+    "selling_price_per_seat_child",
+    "selling_price_per_seat_infant",
+    "token_amount",
+    "adult_seats",
+    "child_seats",
+}
 
 
 class Group(models.Model):
@@ -30,7 +45,6 @@ class Group(models.Model):
 
     pnr = models.CharField(max_length=20, unique=True)
     is_active = models.BooleanField(default=True)
-    is_published = models.BooleanField(default=False)
 
     class Meta:
         db_table = "groups"
@@ -38,15 +52,29 @@ class Group(models.Model):
     def __str__(self):
         return self.group_name
 
+    def save(self, *args, **kwargs):
+        should_invalidate_cache = False
+        if self.pk:
+            previous = (
+                Group.objects.filter(pk=self.pk)
+                .values(*GROUP_CACHE_INVALIDATE_FIELDS)
+                .first()
+            )
+            if previous:
+                should_invalidate_cache = any(
+                    previous[field] != getattr(self, field)
+                    for field in GROUP_CACHE_INVALIDATE_FIELDS
+                )
+
+        super().save(*args, **kwargs)
+
+        if should_invalidate_cache:
+            GroupCache.delete(self.pk)
+
 
 class GroupBookingDetail(models.Model):
     group = models.ForeignKey(
         Group,
-        on_delete=models.CASCADE,
-        related_name="booking_details",
-    )
-    flight = models.ForeignKey(
-        "Flight",
         on_delete=models.CASCADE,
         related_name="booking_details",
     )
@@ -83,6 +111,7 @@ class GroupBookingDetail(models.Model):
             group.save(
                 update_fields=["available_adult_seats", "available_child_seats"]
             )
+            GroupCache.delete(self.group_id)
 
     def save(self, *args, **kwargs):
         previous_status = None
@@ -148,3 +177,4 @@ class Segment(models.Model):
 
     def __str__(self):
         return self.flight_number
+

@@ -51,7 +51,7 @@ class GroupView:
 @login_required
 @user_passes_test(is_superuser_and_staff)
 def flight_info_api(request):
-    flight_number = request.GET.get("flight_number", "").strip()
+        flight_number = request.GET.get("flight_number", "").strip()
 
         if not flight_number:
             response = CoreResponse.generate_response(
@@ -63,7 +63,7 @@ def flight_info_api(request):
             )
             return CoreResponse.send_error_response(response, status=HTTPStatus.BAD_REQUEST)
 
-        segment_data = SegmentView.service.get_segment_by_flight_number(flight_number)
+        segment_data = SegmentService().get_segment_by_flight_number(flight_number)
 
         if segment_data is None:
             response = CoreResponse.generate_response(
@@ -85,7 +85,7 @@ class BookingView:
     service = BookingService()
 
     @staticmethod
-    def create(request, pk):
+    def create(request):
         try:
             booking_request = BookingRequest.from_json(request.body)
         except ValueError as exc:
@@ -99,7 +99,7 @@ class BookingView:
             return CoreResponse.send_error_response(response, status=HTTPStatus.BAD_REQUEST)
 
         try:
-            booking_data = BookingView.service.create_booking(pk, booking_request)
+            booking_data = BookingView.service.create_booking(booking_request)
         except InsufficientSeatsError as exc:
             response = CoreResponse.generate_response(
                 success=False,
@@ -128,7 +128,7 @@ class BookingView:
                 message="Group not found.",
                 status=CoreStatus.Error.value,
                 data={},
-                error={"detail": f"No group exists with id {pk}."},
+                error={"detail": f"No group exists with id {booking_request.group_id}."},
             )
             return CoreResponse.send_error_response(response, status=HTTPStatus.NOT_FOUND)
 
