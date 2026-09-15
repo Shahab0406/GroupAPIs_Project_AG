@@ -12,5 +12,5 @@ def to_json_dict(value):
     if isinstance(value, date):
         return value.isoformat()
     if isinstance(value, Decimal):
-        return str(value)
+        return float(value)
     return value

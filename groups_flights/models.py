@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 
 from groups_flights.utils import BookingStatus, TravelClass
 
@@ -69,6 +69,39 @@ class GroupBookingDetail(models.Model):
     def __str__(self):
         return f"{self.group.group_name} booking ({self.status})"
 
+    def release_seats(self):
+        with transaction.atomic():
+            group = Group.objects.select_for_update().get(pk=self.group_id)
+            group.available_adult_seats = min(
+                group.adult_seats,
+                group.available_adult_seats + self.adult_seats_requested,
+            )
+            group.available_child_seats = min(
+                group.child_seats,
+                group.available_child_seats + self.child_seats_requested,
+            )
+            group.save(
+                update_fields=["available_adult_seats", "available_child_seats"]
+            )
+
+    def save(self, *args, **kwargs):
+        previous_status = None
+        if self.pk:
+            previous_status = (
+                GroupBookingDetail.objects.filter(pk=self.pk)
+                .values_list("status", flat=True)
+                .first()
+            )
+
+        super().save(*args, **kwargs)
+
+        if (
+            previous_status is not None
+            and previous_status != BookingStatus.CANCELLED
+            and self.status == BookingStatus.CANCELLED
+        ):
+            self.release_seats()
+
 
 class Flight(models.Model):
     group = models.ForeignKey(
@@ -92,12 +125,6 @@ class Flight(models.Model):
     meal_available = models.BooleanField(default=False)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["group", "flight_number", "departure_datetime"],
-                name="unique_flight_per_group_departure",
-            ),
-        ]
         db_table = "flights"
 
     def __str__(self):

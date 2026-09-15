@@ -108,9 +108,7 @@ class BookingView:
                 data={},
                 error={
                     "detail": str(exc),
-                    "seat_type": exc.seat_type,
-                    "requested": exc.requested,
-                    "available": exc.available,
+                    "seat_type": exc.seat_type
                 },
             )
             return CoreResponse.send_error_response(response, status=HTTPStatus.BAD_REQUEST)
