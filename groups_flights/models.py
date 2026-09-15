@@ -1,7 +1,9 @@
 from django.db import models
 
 from groups_flights.utils import BookingStatus, TravelClass
+from groups_flights.utils.status import InvoiceStatus, PaymentStatus
 
+#====================================================================================================================
 
 class Group(models.Model):
     group_name = models.CharField(max_length=255)
@@ -69,6 +71,38 @@ class GroupBookingDetail(models.Model):
     def __str__(self):
         return f"{self.group.group_name} booking ({self.status})"
 
+
+class GroupFlightsInvoice(models.Model):
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.CASCADE,
+        related_name="invoices",
+    )
+    invoice_number = models.CharField(max_length=50, unique=True,null=True, blank=True)
+    booking_details = models.ForeignKey(
+        GroupBookingDetail,
+        on_delete=models.CASCADE,
+        related_name="invoices",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=InvoiceStatus.choices,
+        default=InvoiceStatus.PENDING,
+    )
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.empty,
+    )
+    financial_profile = models.CharField(max_length=255)
+
+    class Meta:
+            db_table = "group_flights_invoices"
+    
+    def __str__(self):
+        return f"{self.invoice_number} booking ({self.status})"
+    
+#====================================================================================================================
 
 class Flight(models.Model):
     group = models.ForeignKey(

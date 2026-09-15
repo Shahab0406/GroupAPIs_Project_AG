@@ -47,11 +47,13 @@ class GroupView:
             data=group_data,
         )
 
+class SegmentView:
+    service = SegmentService()
 
-@login_required
-@user_passes_test(is_superuser_and_staff)
-def flight_info_api(request):
-    flight_number = request.GET.get("flight_number", "").strip()
+    @login_required
+    @user_passes_test(is_superuser_and_staff)
+    def flight_info(request):
+        flight_number = request.GET.get("flight_number", "").strip()
 
         if not flight_number:
             response = CoreResponse.generate_response(
