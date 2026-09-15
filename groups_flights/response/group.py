@@ -1,8 +1,7 @@
 from dataclasses import asdict, dataclass
-from datetime import datetime
-from decimal import Decimal
 
 from groups_flights.models import Group
+from groups_flights.utils import CurrencyConvert
 
 from .flight import FlightResponse
 from .serialize import to_json_dict
@@ -12,17 +11,16 @@ from .serialize import to_json_dict
 class GroupSummaryResponse:
     id: int
     group_name: str
-    pnr: str
     adult_seats: int
     available_adult_seats: int
     child_seats: int
     available_child_seats: int
     selling_currency: str
-    selling_price_per_seat_adult: Decimal
-    selling_price_per_seat_child: Decimal
-    token_amount: Decimal
-    token_payment_deadline: datetime
-    full_payment_deadline: datetime
+    selling_price_per_seat_adult: CurrencyConvert
+    selling_price_per_seat_child: CurrencyConvert | None
+    token_amount: CurrencyConvert
+    token_payment_deadline: int
+    full_payment_deadline: int
     is_active: bool
     flights: list[FlightResponse]
 
@@ -31,15 +29,23 @@ class GroupSummaryResponse:
         return cls(
             id=group.id,
             group_name=group.group_name,
-            pnr=group.pnr,
             adult_seats=group.adult_seats,
             available_adult_seats=group.available_adult_seats,
             child_seats=group.child_seats,
             available_child_seats=group.available_child_seats,
             selling_currency=group.selling_currency,
-            selling_price_per_seat_adult=group.selling_price_per_seat_adult,
-            selling_price_per_seat_child=group.selling_price_per_seat_child,
-            token_amount=group.token_amount,
+            selling_price_per_seat_adult=CurrencyConvert.from_amount(
+                group.selling_price_per_seat_adult,
+                group.selling_currency,
+            ),
+            selling_price_per_seat_child=CurrencyConvert.from_amount_optional(
+                group.selling_price_per_seat_child,
+                group.selling_currency,
+            ),
+            token_amount=CurrencyConvert.from_amount(
+                group.token_amount,
+                group.selling_currency,
+            ),
             token_payment_deadline=group.token_payment_deadline,
             full_payment_deadline=group.full_payment_deadline,
             is_active=group.is_active,
@@ -48,20 +54,33 @@ class GroupSummaryResponse:
 
     @classmethod
     def from_dict(cls, data: dict) -> "GroupSummaryResponse":
+        selling_currency = data["selling_currency"]
         return cls(
             id=data["id"],
             group_name=data["group_name"],
-            pnr=data["pnr"],
             adult_seats=data["adult_seats"],
             available_adult_seats=data["available_adult_seats"],
             child_seats=data["child_seats"],
             available_child_seats=data["available_child_seats"],
-            selling_currency=data["selling_currency"],
-            selling_price_per_seat_adult=data["selling_price_per_seat_adult"],
-            selling_price_per_seat_child=data["selling_price_per_seat_child"],
-            token_amount=data["token_amount"],
-            token_payment_deadline=data["token_payment_deadline"],
-            full_payment_deadline=data["full_payment_deadline"],
+            selling_currency=selling_currency,
+            selling_price_per_seat_adult=CurrencyConvert.from_amount(
+                data["selling_price_per_seat_adult"]["value"],
+                selling_currency,
+            ),
+            selling_price_per_seat_child=(
+                CurrencyConvert.from_amount(
+                    data["selling_price_per_seat_child"]["value"],
+                    selling_currency,
+                )
+                if data.get("selling_price_per_seat_child")
+                else None
+            ),
+            token_amount=CurrencyConvert.from_amount(
+                data["token_amount"]["value"],
+                selling_currency,
+            ),
+            token_payment_deadline=int(data["token_payment_deadline"]),
+            full_payment_deadline=int(data["full_payment_deadline"]),
             is_active=data["is_active"],
             flights=[FlightResponse.from_dict(flight) for flight in data.get("flights", [])],
         )
@@ -80,18 +99,13 @@ class GroupResponse:
     available_adult_seats: int
     child_seats: int
     available_child_seats: int
-    token_payment_deadline: datetime
-    full_payment_deadline: datetime
-    token_amount: Decimal
-    buying_currency: str
-    buying_price_per_seat_adult: Decimal
-    buying_price_per_seat_child: Decimal
-    buying_price_per_seat_infant: Decimal
+    token_payment_deadline: int
+    full_payment_deadline: int
+    token_amount: CurrencyConvert
     selling_currency: str
-    selling_price_per_seat_adult: Decimal
-    selling_price_per_seat_child: Decimal
-    selling_price_per_seat_infant: Decimal
-    pnr: str
+    selling_price_per_seat_adult: CurrencyConvert
+    selling_price_per_seat_child: CurrencyConvert | None
+    selling_price_per_seat_infant: CurrencyConvert
     is_active: bool
     flights: list[FlightResponse]
 
@@ -106,16 +120,23 @@ class GroupResponse:
             available_child_seats=group.available_child_seats,
             token_payment_deadline=group.token_payment_deadline,
             full_payment_deadline=group.full_payment_deadline,
-            token_amount=group.token_amount,
-            buying_currency=group.buying_currency,
-            buying_price_per_seat_adult=group.buying_price_per_seat_adult,
-            buying_price_per_seat_child=group.buying_price_per_seat_child,
-            buying_price_per_seat_infant=group.buying_price_per_seat_infant,
+            token_amount=CurrencyConvert.from_amount(
+                group.token_amount,
+                group.selling_currency,
+            ),
             selling_currency=group.selling_currency,
-            selling_price_per_seat_adult=group.selling_price_per_seat_adult,
-            selling_price_per_seat_child=group.selling_price_per_seat_child,
-            selling_price_per_seat_infant=group.selling_price_per_seat_infant,
-            pnr=group.pnr,
+            selling_price_per_seat_adult=CurrencyConvert.from_amount(
+                group.selling_price_per_seat_adult,
+                group.selling_currency,
+            ),
+            selling_price_per_seat_child=CurrencyConvert.from_amount_optional(
+                group.selling_price_per_seat_child,
+                group.selling_currency,
+            ),
+            selling_price_per_seat_infant=CurrencyConvert.from_amount(
+                group.selling_price_per_seat_infant,
+                group.selling_currency,
+            ),
             is_active=group.is_active,
             flights=[FlightResponse.from_model(flight) for flight in group.flights.all()],
         )

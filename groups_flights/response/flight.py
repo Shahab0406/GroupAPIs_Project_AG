@@ -8,7 +8,6 @@ from .serialize import to_json_dict
 
 @dataclass
 class FlightResponse:
-    id: int
     flight_number: str
     departure_datetime: datetime
     origin: str
@@ -21,7 +20,6 @@ class FlightResponse:
     @classmethod
     def from_model(cls, flight: Flight) -> "FlightResponse":
         return cls(
-            id=flight.id,
             flight_number=flight.flight_number,
             departure_datetime=flight.departure_datetime,
             origin=flight.origin,
@@ -35,7 +33,6 @@ class FlightResponse:
     @classmethod
     def from_dict(cls, data: dict) -> "FlightResponse":
         return cls(
-            id=data["id"],
             flight_number=data["flight_number"],
             departure_datetime=data["departure_datetime"],
             origin=data["origin"],

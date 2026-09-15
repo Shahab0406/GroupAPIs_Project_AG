@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from django.db import models, transaction
 
 from groups_flights.cache import GroupCache
@@ -20,17 +21,17 @@ GROUP_CACHE_INVALIDATE_FIELDS = {
 
 class Group(models.Model):
     group_name = models.CharField(max_length=255)
-    adult_seats = models.PositiveIntegerField(help_text="Total number of adult seats in the group")
-    available_adult_seats = models.PositiveIntegerField(
-        help_text="Adult seats currently available for booking",
-    )
-    child_seats = models.PositiveIntegerField(help_text="Total number of child seats in the group")
-    available_child_seats = models.PositiveIntegerField(
-        help_text="Child seats currently available for booking",
-    )
+    adult_seats = models.PositiveIntegerField()
+    available_adult_seats = models.PositiveIntegerField()
+    child_seats = models.PositiveIntegerField(default=0)
+    available_child_seats = models.PositiveIntegerField(default=0)
 
-    token_payment_deadline = models.DateTimeField()
-    full_payment_deadline = models.DateTimeField()
+    token_payment_deadline = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+    )
+    full_payment_deadline = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+    )
     token_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     buying_currency = models.CharField(max_length=3)
@@ -88,8 +89,12 @@ class GroupBookingDetail(models.Model):
     adult_price_per_seat = models.DecimalField(max_digits=10, decimal_places=2)
     child_price_per_seat = models.DecimalField(max_digits=10, decimal_places=2)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    token_payment_deadline = models.DateTimeField()
-    full_payment_deadline = models.DateTimeField()
+    token_payment_deadline = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+    )
+    full_payment_deadline = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+    )
 
     class Meta:
         db_table = "group_booking_details"
