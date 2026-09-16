@@ -73,18 +73,13 @@ class GroupBookingDetail(models.Model):
 
 
 class GroupFlightsInvoice(models.Model):
-    group = models.ForeignKey(
-        Group,
-        on_delete=models.CASCADE,
-        related_name="invoices",
-    )
     invoice_number = models.CharField(max_length=50, unique=True,null=True, blank=True)
     booking_details = models.ForeignKey(
         GroupBookingDetail,
-        on_delete=models.CASCADE,
+        on_delete=models.RESTRICT,
         related_name="invoices",
     )
-    status = models.CharField(
+    invoice_status = models.CharField(
         max_length=20,
         choices=InvoiceStatus.choices,
         default=InvoiceStatus.PENDING,
@@ -100,7 +95,7 @@ class GroupFlightsInvoice(models.Model):
             db_table = "group_flights_invoices"
     
     def __str__(self):
-        return f"{self.invoice_number} booking ({self.status})"
+        return f"{self.invoice_number} booking ({self.invoice_status})"
     
 #====================================================================================================================
 

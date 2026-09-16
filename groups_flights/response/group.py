@@ -61,43 +61,4 @@ class GroupResponse:
     def to_dict(self) -> dict:
         return to_json_dict(asdict(self))
 
-    
-class GroupInvoiceResponse:
-
-    def __init__(self, invoice: GroupFlightsInvoice):
-        self.invoice = invoice
-
-    def to_dict(self) -> dict:
-        return {
-            "group_invoice": {
-                "id": self.invoice.id,
-                "invoice_number": self.invoice.invoice_number,
-                "status": self.invoice.status,
-                "payment_status": self.invoice.payment_status,
-                "financial_profile": self.invoice.financial_profile,
-            },
-            "group": (
-                {
-                    "id": self.invoice.group.id,
-                    "invoice_number": self.invoice.invoice_number,
-                    "group_name": getattr(
-                        self.invoice.group, "group_name", None
-                    ),
-                }
-                if self.invoice.group
-                else None
-            ),
-            "booking_details": (
-                {
-                    "id": self.invoice.booking_details.id,
-                    "group_name": getattr(
-                        self.invoice.group, "group_name", None
-                    ),
-                    "status": getattr(
-                        self.invoice.booking_details, "status", None
-                    ),
-                }
-                if self.invoice.booking_details
-                else None
-            ),
-        }
+   

@@ -8,10 +8,10 @@ class BookingStatus(models.TextChoices):
 
 class InvoiceStatus(models.TextChoices):
     PENDING = "pending", "Pending"
-    PAID = "paid", "Paid"
+    POSTED = "posted", "Posted"
     FAILED = "failed", "Failed"
 
 class PaymentStatus(models.TextChoices):
     empty = "---", "---" 
-    TOKEN_PAYMENT = "token", "Token Payment"
-    FULL_PAYMENT = "full", "Full Payment"
+    TOKEN_PAYMENT = "token payment", "Token Payment"
+    FULL_PAYMENT = "full payment", "Full Payment"

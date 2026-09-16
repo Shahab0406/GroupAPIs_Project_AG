@@ -158,12 +158,12 @@ class GroupBookingDetailAdmin(admin.ModelAdmin):
 class GroupFlightsInvoiceAdmin(admin.ModelAdmin):
     list_display = (
         "invoice_number",
-        "group",
         "booking_details",
-        "status",
+        "invoice_status",
+        "payment_status",
     )
-    list_filter = ("status",)
-    search_fields = ("invoice_number", "group__group_name")
+    list_filter = ("invoice_status", "payment_status")
+    search_fields = ("invoice_number","booking_details__group__group_name")
 
 @admin.register(Segment)
 class SegmentAdmin(admin.ModelAdmin):
