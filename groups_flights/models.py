@@ -90,13 +90,13 @@ class GroupFlightsInvoice(models.Model):
         default=PaymentStatus.UNPAID,
     )
     financial_profile = models.CharField(max_length=255, null=True, blank=True)
-    date_time=models.DateTimeField(default=timezone.now)
+    payment_deadline=models.DateTimeField(null=True, blank=True)
 
     class Meta:
             db_table = "group_flights_invoices"
     
     def __str__(self):
-        return f"{self.invoice_number} booking ({self.invoice_status})"
+        return f"{self.invoice_number} booking_id ({self.booking_details.id})"
     
 #====================================================================================================================
 
