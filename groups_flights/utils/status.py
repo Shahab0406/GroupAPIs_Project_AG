@@ -12,6 +12,5 @@ class InvoiceStatus(models.TextChoices):
     FAILED = "failed", "Failed"
 
 class PaymentStatus(models.TextChoices):
-    empty = "---", "---" 
-    TOKEN_PAYMENT = "token payment", "Token Payment"
-    FULL_PAYMENT = "full payment", "Full Payment"
+    UNPAID = "unpaid", "Unpaid"
+    PAID = "paid", "Paid"

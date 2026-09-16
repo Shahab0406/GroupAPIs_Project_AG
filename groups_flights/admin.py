@@ -161,6 +161,8 @@ class GroupFlightsInvoiceAdmin(admin.ModelAdmin):
         "booking_details",
         "invoice_status",
         "payment_status",
+        "financial_profile",
+        "date_time",
     )
     list_filter = ("invoice_status", "payment_status")
     search_fields = ("invoice_number","booking_details__group__group_name")

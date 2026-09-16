@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.utils import timezone
 from groups_flights.utils import BookingStatus, TravelClass
 from groups_flights.utils.status import InvoiceStatus, PaymentStatus
 
@@ -87,9 +87,10 @@ class GroupFlightsInvoice(models.Model):
     payment_status = models.CharField(
         max_length=20,
         choices=PaymentStatus.choices,
-        default=PaymentStatus.empty,
+        default=PaymentStatus.UNPAID,
     )
-    financial_profile = models.CharField(max_length=255)
+    financial_profile = models.CharField(max_length=255, null=True, blank=True)
+    date_time=models.DateTimeField(default=timezone.now)
 
     class Meta:
             db_table = "group_flights_invoices"
