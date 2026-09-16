@@ -4,7 +4,7 @@ from django.forms.widgets import Media
 
 from django.contrib.admin.forms import AdminAuthenticationForm
 from django.contrib.admin.widgets import AdminSplitDateTime
-from .models import Flight, Segment
+from .models import Flight, GroupFlightsInvoice, Segment
 
 from .models import Flight, Group, GroupBookingDetail, Segment
 
@@ -154,6 +154,18 @@ class GroupBookingDetailAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("group__group_name", "group__pnr")
 
+@admin.register(GroupFlightsInvoice)
+class GroupFlightsInvoiceAdmin(admin.ModelAdmin):
+    list_display = (
+        "invoice_number",
+        "booking_details",
+        "invoice_status",
+        "payment_status",
+        "financial_profile",
+        "payment_deadline",
+    )
+    list_filter = ("invoice_status", "payment_status")
+    search_fields = ("invoice_number","booking_details__group__group_name")
 
 @admin.register(Segment)
 class SegmentAdmin(admin.ModelAdmin):

@@ -2,7 +2,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from decimal import Decimal
 
-from groups_flights.models import Group
+from groups_flights.models import Group, GroupFlightsInvoice
 
 from .flight import FlightResponse
 from .serialize import to_json_dict
@@ -60,3 +60,5 @@ class GroupResponse:
 
     def to_dict(self) -> dict:
         return to_json_dict(asdict(self))
+
+   
