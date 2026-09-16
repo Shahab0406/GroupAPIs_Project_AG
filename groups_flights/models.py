@@ -96,7 +96,7 @@ class GroupFlightsInvoice(models.Model):
             db_table = "group_flights_invoices"
     
     def __str__(self):
-        return f"{self.invoice_number} booking_id ({self.booking_details.id})"
+        return f"({self.booking_details.id}) {self.invoice_number}"
     
 #====================================================================================================================
 
