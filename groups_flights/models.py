@@ -2,7 +2,10 @@ from django.core.validators import MinValueValidator
 from django.db import models, transaction
 
 from groups_flights.cache import GroupCache
+from django.db import models
+from django.utils import timezone
 from groups_flights.utils import BookingStatus, TravelClass
+from groups_flights.utils.status import InvoiceStatus, PaymentStatus
 
 GROUP_CACHE_INVALIDATE_FIELDS = {
     "buying_currency",
@@ -136,6 +139,34 @@ class GroupBookingDetail(models.Model):
         ):
             self.release_seats()
 
+
+class GroupFlightsInvoice(models.Model):
+    invoice_number = models.CharField(max_length=50, unique=True,null=True, blank=True)
+    booking_details = models.ForeignKey(
+        GroupBookingDetail,
+        on_delete=models.RESTRICT,
+        related_name="invoices",
+    )
+    invoice_status = models.CharField(
+        max_length=20,
+        choices=InvoiceStatus.choices,
+        default=InvoiceStatus.PENDING,
+    )
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.UNPAID,
+    )
+    financial_profile = models.CharField(max_length=255, null=True, blank=True)
+    payment_deadline=models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+            db_table = "group_flights_invoices"
+
+    def __str__(self):
+        return f"({self.booking_details.id}) {self.invoice_number}"
+
+#====================================================================================================================
 
 class Flight(models.Model):
     group = models.ForeignKey(

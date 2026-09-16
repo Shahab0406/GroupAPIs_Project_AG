@@ -1,6 +1,6 @@
 from dataclasses import asdict, dataclass
 
-from groups_flights.models import Group
+from groups_flights.models import Group, GroupFlightsInvoice
 from groups_flights.utils import CurrencyConvert
 
 from .flight import FlightResponse
@@ -145,3 +145,4 @@ class GroupResponse:
         data = to_json_dict(asdict(self))
         data["flights"] = [flight.to_dict() for flight in self.flights]
         return data
+
