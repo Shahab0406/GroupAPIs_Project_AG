@@ -5,7 +5,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("groups_flights", "0010_remove_groupbookingdetail_flight"),
+        ("groups_flights", "0016_remove_groupbookingdetail_flight"),
     ]
 
     operations = [

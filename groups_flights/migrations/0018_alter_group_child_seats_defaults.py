@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("groups_flights", "0011_alter_payment_deadlines_to_hours"),
+        ("groups_flights", "0017_alter_payment_deadlines_to_hours"),
     ]
 
     operations = [

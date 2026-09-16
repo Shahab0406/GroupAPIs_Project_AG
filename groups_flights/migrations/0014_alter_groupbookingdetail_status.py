@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('groups_flights', '0007_remove_flight_unique_flight_per_group_departure_and_more'),
+        ('groups_flights', '0013_remove_flight_unique_flight_per_group_departure_and_more'),
     ]
 
     operations = [

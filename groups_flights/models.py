@@ -2,8 +2,6 @@ from django.core.validators import MinValueValidator
 from django.db import models, transaction
 
 from groups_flights.cache import GroupCache
-from django.db import models
-from django.utils import timezone
 from groups_flights.utils import BookingStatus, TravelClass
 from groups_flights.utils.status import InvoiceStatus, PaymentStatus
 

@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('groups_flights', '0006_rename_seats_requested_fields'),
+        ('groups_flights', '0012_remove_groupflightsinvoice_date_time_and_more'),
     ]
 
     operations = [

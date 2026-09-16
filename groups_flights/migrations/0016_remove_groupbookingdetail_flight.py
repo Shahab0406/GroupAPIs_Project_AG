@@ -4,12 +4,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("groups_flights", "0008_alter_groupbookingdetail_status"),
+        ("groups_flights", "0015_remove_group_is_published"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name="group",
-            name="is_published",
+            model_name="groupbookingdetail",
+            name="flight",
         ),
     ]
