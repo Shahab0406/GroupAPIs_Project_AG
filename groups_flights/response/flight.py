@@ -1,47 +1,48 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
+
+from dataclasses_json import config, dataclass_json
 
 from groups_flights.models import Flight
 
-from .serialize import to_json_dict
+
+def _encode_datetime(value: datetime) -> str:
+    if value.tzinfo is not None:
+        value = value.replace(tzinfo=None)
+    return value.isoformat(timespec="seconds")
 
 
+@dataclass_json
 @dataclass
 class FlightResponse:
     flight_number: str
-    departure_datetime: datetime
     origin: str
-    arrival_datetime: datetime
     destination: str
     travel_class: str
     baggage_allowance: str
     meal_available: bool
+    departure_datetime: datetime = field(
+        metadata=config(
+            encoder=_encode_datetime,
+            decoder=datetime.fromisoformat,
+        ),
+    )
+    arrival_datetime: datetime = field(
+        metadata=config(
+            encoder=_encode_datetime,
+            decoder=datetime.fromisoformat,
+        ),
+    )
 
     @classmethod
     def from_model(cls, flight: Flight) -> "FlightResponse":
         return cls(
             flight_number=flight.flight_number,
-            departure_datetime=flight.departure_datetime,
             origin=flight.origin,
-            arrival_datetime=flight.arrival_datetime,
             destination=flight.destination,
             travel_class=flight.travel_class,
             baggage_allowance=flight.baggage_allowance,
             meal_available=flight.meal_available,
+            departure_datetime=flight.departure_datetime,
+            arrival_datetime=flight.arrival_datetime,
         )
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "FlightResponse":
-        return cls(
-            flight_number=data["flight_number"],
-            departure_datetime=data["departure_datetime"],
-            origin=data["origin"],
-            arrival_datetime=data["arrival_datetime"],
-            destination=data["destination"],
-            travel_class=data["travel_class"],
-            baggage_allowance=data["baggage_allowance"],
-            meal_available=data["meal_available"],
-        )
-
-    def to_dict(self) -> dict:
-        return to_json_dict(asdict(self))

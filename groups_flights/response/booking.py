@@ -1,12 +1,14 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
+
+from dataclasses_json import dataclass_json
 
 from groups_flights.models import GroupBookingDetail
 from groups_flights.utils import CurrencyConvert
 
 from .group import GroupSummaryResponse
-from .serialize import to_json_dict
 
 
+@dataclass_json
 @dataclass
 class GroupBookingDetailResponse:
     id: int
@@ -45,8 +47,3 @@ class GroupBookingDetailResponse:
             full_payment_deadline=booking.full_payment_deadline,
             group=group,
         )
-
-    def to_dict(self) -> dict:
-        data = to_json_dict(asdict(self))
-        data["group"] = self.group.to_dict()
-        return data

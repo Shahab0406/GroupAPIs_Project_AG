@@ -1,12 +1,14 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
-from groups_flights.models import Group, GroupFlightsInvoice
+from dataclasses_json import dataclass_json
+
+from groups_flights.models import Group
 from groups_flights.utils import CurrencyConvert
 
 from .flight import FlightResponse
-from .serialize import to_json_dict
 
 
+@dataclass_json
 @dataclass
 class GroupSummaryResponse:
     id: int
@@ -52,45 +54,8 @@ class GroupSummaryResponse:
             flights=[FlightResponse.from_model(flight) for flight in group.flights.all()],
         )
 
-    @classmethod
-    def from_dict(cls, data: dict) -> "GroupSummaryResponse":
-        selling_currency = data["selling_currency"]
-        return cls(
-            id=data["id"],
-            group_name=data["group_name"],
-            adult_seats=data["adult_seats"],
-            available_adult_seats=data["available_adult_seats"],
-            child_seats=data["child_seats"],
-            available_child_seats=data["available_child_seats"],
-            selling_currency=selling_currency,
-            selling_price_per_seat_adult=CurrencyConvert.from_amount(
-                data["selling_price_per_seat_adult"]["value"],
-                selling_currency,
-            ),
-            selling_price_per_seat_child=(
-                CurrencyConvert.from_amount(
-                    data["selling_price_per_seat_child"]["value"],
-                    selling_currency,
-                )
-                if data.get("selling_price_per_seat_child")
-                else None
-            ),
-            token_amount=CurrencyConvert.from_amount(
-                data["token_amount"]["value"],
-                selling_currency,
-            ),
-            token_payment_deadline=int(data["token_payment_deadline"]),
-            full_payment_deadline=int(data["full_payment_deadline"]),
-            is_active=data["is_active"],
-            flights=[FlightResponse.from_dict(flight) for flight in data.get("flights", [])],
-        )
 
-    def to_dict(self) -> dict:
-        data = to_json_dict(asdict(self))
-        data["flights"] = [flight.to_dict() for flight in self.flights]
-        return data
-
-
+@dataclass_json
 @dataclass
 class GroupResponse:
     id: int
@@ -140,9 +105,3 @@ class GroupResponse:
             is_active=group.is_active,
             flights=[FlightResponse.from_model(flight) for flight in group.flights.all()],
         )
-
-    def to_dict(self) -> dict:
-        data = to_json_dict(asdict(self))
-        data["flights"] = [flight.to_dict() for flight in self.flights]
-        return data
-

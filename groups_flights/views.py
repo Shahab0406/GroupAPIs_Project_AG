@@ -1,4 +1,6 @@
+import json
 from http import HTTPStatus
+
 from django.contrib.admin.views.decorators import staff_member_required
 from .response import CoreResponse, CoreStatus
 from .services import GroupService, SegmentService
@@ -89,8 +91,19 @@ class BookingView:
     @staticmethod
     def create(request):
         try:
-            booking_request = BookingRequest.from_json(request.body)
-        except ValueError as exc:
+            if not request.body:
+                raise ValueError("Request body is required.")
+            booking_request = BookingRequest.from_json(request.body.decode())
+        except json.JSONDecodeError as exc:
+            response = CoreResponse.generate_response(
+                success=False,
+                message="Invalid booking request.",
+                status=CoreStatus.Error.value,
+                data={},
+                error={"detail": "Invalid JSON payload."},
+            )
+            return CoreResponse.send_error_response(response, status=HTTPStatus.BAD_REQUEST)
+        except (ValueError, TypeError, KeyError) as exc:
             response = CoreResponse.generate_response(
                 success=False,
                 message="Invalid booking request.",

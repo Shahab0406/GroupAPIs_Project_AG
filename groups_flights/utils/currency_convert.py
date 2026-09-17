@@ -1,10 +1,18 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 
+from dataclasses_json import config, dataclass_json
 
+
+@dataclass_json
 @dataclass
 class CurrencyConvert:
-    value: Decimal
+    value: Decimal = field(
+        metadata=config(
+            encoder=lambda value: float(value),
+            decoder=lambda value: Decimal(str(value)),
+        ),
+    )
     currency: str
 
     @classmethod
@@ -20,10 +28,3 @@ class CurrencyConvert:
         if value is None or value == 0:
             return None
         return cls(value=value, currency=currency)
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "CurrencyConvert":
-        return cls(
-            value=Decimal(str(data["value"])),
-            currency=data["currency"],
-        )
