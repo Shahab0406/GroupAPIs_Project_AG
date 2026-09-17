@@ -1,4 +1,6 @@
+import json
 from http import HTTPStatus
+
 from django.contrib.admin.views.decorators import staff_member_required
 from .response import CoreResponse, CoreStatus
 from .services import GroupService, SegmentService
@@ -87,10 +89,21 @@ class BookingView:
     service = BookingService()
 
     @staticmethod
-    def create(request, pk):
+    def create(request):
         try:
-            booking_request = BookingRequest.from_json(request.body)
-        except ValueError as exc:
+            if not request.body:
+                raise ValueError("Request body is required.")
+            booking_request = BookingRequest.from_json(request.body.decode())
+        except json.JSONDecodeError as exc:
+            response = CoreResponse.generate_response(
+                success=False,
+                message="Invalid booking request.",
+                status=CoreStatus.Error.value,
+                data={},
+                error={"detail": "Invalid JSON payload."},
+            )
+            return CoreResponse.send_error_response(response, status=HTTPStatus.BAD_REQUEST)
+        except (ValueError, TypeError, KeyError) as exc:
             response = CoreResponse.generate_response(
                 success=False,
                 message="Invalid booking request.",
@@ -101,7 +114,7 @@ class BookingView:
             return CoreResponse.send_error_response(response, status=HTTPStatus.BAD_REQUEST)
 
         try:
-            booking_data = BookingView.service.create_booking(pk, booking_request)
+            booking_data = BookingView.service.create_booking(booking_request)
         except InsufficientSeatsError as exc:
             response = CoreResponse.generate_response(
                 success=False,
@@ -110,9 +123,7 @@ class BookingView:
                 data={},
                 error={
                     "detail": str(exc),
-                    "seat_type": exc.seat_type,
-                    "requested": exc.requested,
-                    "available": exc.available,
+                    "seat_type": exc.seat_type
                 },
             )
             return CoreResponse.send_error_response(response, status=HTTPStatus.BAD_REQUEST)
@@ -132,7 +143,7 @@ class BookingView:
                 message="Group not found.",
                 status=CoreStatus.Error.value,
                 data={},
-                error={"detail": f"No group exists with id {pk}."},
+                error={"detail": f"No group exists with id {booking_request.group_id}."},
             )
             return CoreResponse.send_error_response(response, status=HTTPStatus.NOT_FOUND)
 

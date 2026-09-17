@@ -1,4 +1,4 @@
-from django.contrib import admin 
+from django.contrib import admin, messages
 from django import forms
 from django.forms.widgets import Media
 
@@ -7,6 +7,7 @@ from django.contrib.admin.widgets import AdminSplitDateTime
 from .models import Flight, GroupFlightsInvoice, Segment
 
 from .models import Flight, Group, GroupBookingDetail, Segment
+from .utils import BookingStatus
 
 
 class FlightAdminForm(forms.ModelForm):
@@ -129,9 +130,8 @@ class GroupAdmin(admin.ModelAdmin):
         "child_seats",
         "available_child_seats",
         "is_active",
-        "is_published",
     )
-    list_filter = ("is_active", "is_published")
+    list_filter = ("is_active",)
     search_fields = ("group_name", "pnr")
 
     def get_media(self, request):
@@ -143,7 +143,6 @@ class GroupAdmin(admin.ModelAdmin):
 class GroupBookingDetailAdmin(admin.ModelAdmin):
     list_display = (
         "group",
-        "flight",
         "status",
         "adult_seats_requested",
         "child_seats_requested",
@@ -153,6 +152,32 @@ class GroupBookingDetailAdmin(admin.ModelAdmin):
     )
     list_filter = ("status",)
     search_fields = ("group__group_name", "group__pnr")
+
+    def save_model(self, request, obj, form, change):
+        previous_status = None
+        if change and obj.pk:
+            previous_status = (
+                GroupBookingDetail.objects.filter(pk=obj.pk)
+                .values_list("status", flat=True)
+                .first()
+            )
+
+        super().save_model(request, obj, form, change)
+
+        if (
+            previous_status
+            and previous_status != BookingStatus.CANCELLED
+            and obj.status == BookingStatus.CANCELLED
+        ):
+            self.message_user(
+                request,
+                (
+                    f"Released {obj.adult_seats_requested} adult and "
+                    f"{obj.child_seats_requested} child seat(s) back to "
+                    f"{obj.group.group_name}."
+                ),
+                messages.SUCCESS,
+            )
 
 @admin.register(GroupFlightsInvoice)
 class GroupFlightsInvoiceAdmin(admin.ModelAdmin):

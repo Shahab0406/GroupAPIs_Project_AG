@@ -2,9 +2,9 @@ from django.db import models
 
 
 class BookingStatus(models.TextChoices):
-    ON_HOLD = "on_hold", "On Hold"
-    CONFIRMED = "confirmed", "Confirmed"
-    CANCELLED = "cancelled", "Cancelled"
+    ON_HOLD = "ON_HOLD", "ON_HOLD"
+    CONFIRMED = "CONFIRMED", "CONFIRMED"
+    CANCELLED = "CANCELLED", "CANCELLED"
 
 class InvoiceStatus(models.TextChoices):
     PENDING = "pending", "Pending"
