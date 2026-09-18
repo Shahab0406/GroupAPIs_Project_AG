@@ -1,14 +1,14 @@
+import re
+
 from django.contrib import admin, messages
 from django import forms
 from django.forms.widgets import Media
 
 from django.contrib.admin.forms import AdminAuthenticationForm
 from django.contrib.admin.widgets import AdminSplitDateTime
-from .models import Flight, GroupFlightsInvoice, Segment
+from .models import Airline, Flight, GroupFlightsInvoice, Segment, BookingStatus
 
 from .models import Flight, Group, GroupBookingDetail, Segment
-from .utils import BookingStatus
-
 
 class FlightAdminForm(forms.ModelForm):
 
@@ -34,24 +34,42 @@ class FlightAdminForm(forms.ModelForm):
         # Backend fallback autofill on POST submission
         if self.is_bound and self.data:
             prefix = f"{self.prefix}-" if self.prefix else ""
-            flight_number = self.data.get(f"{prefix}flight_number")
+            raw_flight_number = self.data.get(f"{prefix}flight_number")
 
-            if flight_number:
+            if raw_flight_number:
+                # Clean input (e.g., "zh 306" -> "ZH306")
+                clean_str = re.sub(
+                    r"[^A-Z0-9]", "", str(raw_flight_number).upper()
+                )
+
+                # Format to example ("ZH-306") and extract code "ZH"
+                match = re.match(r"^([A-Z]+)(\d+)$", clean_str)
+                if match:
+                    carrier_code, number = match.groups()
+                    formatted_flight_number = f"{carrier_code}-{number}"
+                else:
+                    carrier_code = "".join(filter(str.isalpha, clean_str))
+                    formatted_flight_number = clean_str
+
+                data = self.data.copy()
+
+                # 1. Primary: Lookup Segment using formatted flight number ("ZH-306")
                 segment = Segment.objects.filter(
-                    flight_number=flight_number
+                    flight_number__iexact=formatted_flight_number
                 ).first()
 
                 if segment:
-                    data = self.data.copy()
+                    if not data.get(f"{prefix}airline") and getattr(
+                        segment, "airline_id", None
+                    ):
+                        data[f"{prefix}airline"] = segment.airline_id
 
-                    # Set standard flight segment fields if empty
                     if not data.get(f"{prefix}origin"):
                         data[f"{prefix}origin"] = segment.origin
 
                     if not data.get(f"{prefix}destination"):
                         data[f"{prefix}destination"] = segment.destination
 
-                    # Split datetime handling (_0 = Date, _1 = Time)
                     if segment.departure_datetime:
                         data.setdefault(
                             f"{prefix}departure_datetime_1",
@@ -63,8 +81,16 @@ class FlightAdminForm(forms.ModelForm):
                             f"{prefix}arrival_datetime_1",
                             segment.arrival_datetime.strftime("%H:%M:%S"),
                         )
-                    self.data = data
+                else:
+                    # 2. Fallback: Auto-fill Airline using prefix "ZH" directly from Airline table
+                    if carrier_code and not data.get(f"{prefix}airline"):
+                        airline = Airline.objects.filter(
+                            code__iexact=carrier_code
+                        ).first()
+                        if airline:
+                            data[f"{prefix}airline"] = airline.id
 
+                self.data = data
 #=================================================================================================================================================================
 
 def get_permission_media(media, request):
@@ -93,7 +119,10 @@ class FlightInline(admin.TabularInline):
         "travel_class",
         "baggage_allowance",
         "meal_available",
+        "airline",
     )
+
+    # readonly_fields = ("airline")
 
     def get_media(self, request):
         media = super().get_media(request)
@@ -202,4 +231,19 @@ class SegmentAdmin(admin.ModelAdmin):
         "arrival_datetime",
     )
     search_fields = ("flight_number",)
+
+@admin.register(Airline)
+class AirlineAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'alias',
+        'slug',
+        'airline_numeric_code',
+        'code',
+        'color',
+        'has_custom_pricing',
+        'logo',
+        'is_enabled',
+    )
+    search_fields = ("name", 'airline_numeric_code')
 #=================================================================================================================================================================

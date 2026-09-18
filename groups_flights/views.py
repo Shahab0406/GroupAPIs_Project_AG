@@ -55,9 +55,9 @@ class SegmentView:
     @login_required
     @user_passes_test(is_superuser_and_staff)
     def flight_info(request):
-        flight_number = request.GET.get("flight_number", "").strip()
+        raw_flight_number = request.GET.get("flight_number", "").strip()
 
-        if not flight_number:
+        if not raw_flight_number:
             response = CoreResponse.generate_response(
                 success=False,
                 message="No flight number provided.",
@@ -65,26 +65,31 @@ class SegmentView:
                 data={},
                 error={"detail": "flight_number query parameter is required."},
             )
-            return CoreResponse.send_error_response(response, status=HTTPStatus.BAD_REQUEST)
+            return CoreResponse.send_error_response(
+                response, status=HTTPStatus.BAD_REQUEST
+            )
 
-        segment_data = SegmentView.service.get_segment_by_flight_number(flight_number)
-
+        segment_data = SegmentView.service.get_flight_info_autofill(raw_flight_number)
+        
         if segment_data is None:
             response = CoreResponse.generate_response(
                 success=False,
                 message="Flight segment not found.",
                 status=CoreStatus.Error.value,
                 data={},
-                error={"detail": f"No segment exists with flight number {flight_number}."},
+                error={
+                    "detail": f"No segment or airline exists for input {raw_flight_number}."
+                },
             )
-            return CoreResponse.send_error_response(response, status=HTTPStatus.NOT_FOUND)
+            return CoreResponse.send_error_response(
+                response, status=HTTPStatus.NOT_FOUND
+            )
 
         return CoreResponse.success_response(
             message="Flight segment retrieved successfully.",
             data=segment_data,
         )
-
-
+    
 class BookingView:
     service = BookingService()
 

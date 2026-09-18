@@ -1,5 +1,6 @@
-from groups_flights.models import Segment
+from groups_flights.models import Segment , Airline
 from groups_flights.response import SegmentResponse
+import re
 
 
 class SegmentService:
@@ -21,3 +22,53 @@ class SegmentService:
         if not segment:
             return None
         return SegmentResponse.from_model(segment).to_flight_info_dict()
+
+    @staticmethod
+    def normalize_flight_number(raw_str):
+            """Converts 'zh306', 'zh.306', or 'ZH 306' -> ('ZH-306', 'ZH')"""
+            clean_str = re.sub(r"[^A-Z0-9]", "", str(raw_str).upper())
+            match = re.match(r"^([A-Z]+)(\d+)$", clean_str)
+    
+            if match:
+                carrier_code, number = match.groups()
+                return f"{carrier_code}-{number}", carrier_code
+    
+            carrier_code = "".join(filter(str.isalpha, clean_str))
+            return clean_str, carrier_code
+
+    #========================================================================================
+    def get_airlineinfo_by_carrier_code(self, carrier_code: str) -> dict | None:
+        """Fetch airline info by carrier code."""
+        if not carrier_code:
+            return None
+
+        airline = Airline.objects.filter(code__iexact=carrier_code).first()
+
+        if not airline:
+            return None
+
+        return {
+            "airline": airline.id,
+            "airline_display": f"{airline.code} - {airline.name}",
+        }
+    #========================================================================================
+    
+    def get_flight_info_autofill(self, raw_flight_number: str) -> dict | None:
+        """Main method for autofill: handles normalization, segment lookup, and airline fallback."""
+        formatted_number, carrier_code = self.normalize_flight_number(raw_flight_number)
+
+        # 1. Try fetching existing segment using formatted string ("ZH-306")
+        segment_data = self.get_segment_by_flight_number(formatted_number)
+        airline_data = self.get_airlineinfo_by_carrier_code(carrier_code)
+        if segment_data:
+            if airline_data:
+                segment_data.setdefault("airline", airline_data["airline"])
+                segment_data.setdefault(
+                    "airline_display", airline_data["airline_display"]
+                )
+            return segment_data
+
+        if airline_data:
+            return airline_data
+
+        return None
