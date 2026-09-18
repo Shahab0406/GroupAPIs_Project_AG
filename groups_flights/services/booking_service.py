@@ -4,14 +4,30 @@ from django.db import transaction
 
 from groups_flights.cache import GroupCache
 from groups_flights.exceptions import InsufficientSeatsError
-from groups_flights.models import Group, GroupBookingDetail
+from groups_flights.models import Group, GroupBookingDetail, GroupFlightsInvoice
 from groups_flights.request.booking_request import BookingRequest
 from groups_flights.response import GroupBookingDetailResponse
 from groups_flights.response.group import GroupSummaryResponse
+from groups_flights.services.group_service import ORDERED_FLIGHTS, ORDERED_GROUP_FLIGHTS
 from groups_flights.utils import BookingStatus
 
 
 class BookingService:
+    @staticmethod
+    def _create_booking_invoices(
+        booking: GroupBookingDetail,
+        group: Group,
+    ) -> list[GroupFlightsInvoice]:
+        token_invoice = GroupFlightsInvoice.objects.create(
+            booking_details=booking,
+            payment_deadline=group.get_token_payment_deadline(),
+        )
+        full_payment_invoice = GroupFlightsInvoice.objects.create(
+            booking_details=booking,
+            payment_deadline=group.get_full_payment_deadline(),
+        )
+        return [token_invoice, full_payment_invoice]
+
     def create_booking(self, booking_request: BookingRequest) -> dict:
         if booking_request.adult_seats_requested < 0 or booking_request.child_seats_requested < 0:
             raise ValueError("Requested seat counts cannot be negative.")
@@ -25,7 +41,7 @@ class BookingService:
         with transaction.atomic():
             group = (
                 Group.objects.select_for_update()
-                .prefetch_related("flights")
+                .prefetch_related(ORDERED_FLIGHTS)
                 .filter(pk=booking_request.group_id, is_active=True)
                 .first()
             )
@@ -61,9 +77,9 @@ class BookingService:
                 adult_price_per_seat=adult_price_per_seat,
                 child_price_per_seat=child_price_per_seat,
                 total_amount=total_amount,
-                token_payment_deadline=group.token_payment_deadline,
-                full_payment_deadline=group.full_payment_deadline,
             )
+
+            invoices = self._create_booking_invoices(booking, group)
 
             group.available_adult_seats -= booking_request.adult_seats_requested
             group.available_child_seats -= booking_request.child_seats_requested
@@ -74,10 +90,11 @@ class BookingService:
 
         booking = (
             GroupBookingDetail.objects.select_related("group")
-            .prefetch_related("group__flights")
+            .prefetch_related(ORDERED_GROUP_FLIGHTS)
             .get(pk=booking.pk)
         )
         return GroupBookingDetailResponse.from_model(
             booking,
             group=GroupSummaryResponse.from_model(booking.group),
+            invoices=invoices,
         ).to_dict()

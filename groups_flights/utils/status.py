@@ -7,10 +7,11 @@ class BookingStatus(models.TextChoices):
     CANCELLED = "CANCELLED", "CANCELLED"
 
 class InvoiceStatus(models.TextChoices):
-    PENDING = "pending", "Pending"
-    POSTED = "posted", "Posted"
-    FAILED = "failed", "Failed"
+    PENDING = "PENDING", "PENDING"
+    POSTED = "POSTED", "POSTED"
+    FAILED = "FAILED", "FAILED"
+
 
 class PaymentStatus(models.TextChoices):
-    UNPAID = "unpaid", "Unpaid"
-    PAID = "paid", "Paid"
+    UNPAID = "UNPAID", "UNPAID"
+    PAID = "PAID", "PAID"

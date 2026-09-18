@@ -1,6 +1,18 @@
+from django.db.models import Prefetch
+
 from groups_flights.cache import GroupCache
-from groups_flights.models import Group
+from groups_flights.models import Flight, Group
 from groups_flights.response import GroupResponse
+
+ORDERED_FLIGHTS = Prefetch(
+    "flights",
+    queryset=Flight.objects.order_by("departure_datetime"),
+)
+
+ORDERED_GROUP_FLIGHTS = Prefetch(
+    "group__flights",
+    queryset=Flight.objects.order_by("departure_datetime"),
+)
 
 
 class GroupService:
@@ -27,7 +39,7 @@ class GroupService:
                 missing_ids.append(group_id)
 
         if missing_ids:
-            groups = Group.objects.prefetch_related("flights").filter(
+            groups = Group.objects.prefetch_related(ORDERED_FLIGHTS).filter(
                 pk__in=missing_ids,
                 is_active=True,
             )
@@ -48,7 +60,9 @@ class GroupService:
         if cached is not None:
             return cached
 
-        group = Group.objects.prefetch_related("flights").filter(pk=pk, is_active=True).first()
+        group = Group.objects.prefetch_related(ORDERED_FLIGHTS).filter(
+            pk=pk, is_active=True
+        ).first()
         if not group:
             return None
 

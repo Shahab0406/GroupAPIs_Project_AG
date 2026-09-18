@@ -1,5 +1,8 @@
+from datetime import datetime, timedelta
+
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
+from django.utils import timezone
 
 from groups_flights.cache import GroupCache
 from groups_flights.utils import BookingStatus, TravelClass
@@ -54,6 +57,24 @@ class Group(models.Model):
     def __str__(self):
         return self.group_name
 
+    def get_token_payment_deadline(
+        self,
+        from_datetime: datetime | None = None,
+    ) -> datetime:
+        from_datetime = from_datetime or timezone.now()
+        return from_datetime + timedelta(hours=self.token_payment_deadline)
+
+    def get_first_flight(self) -> "Flight | None":
+        return self.flights.order_by("departure_datetime").first()
+
+    def get_full_payment_deadline(self) -> datetime:
+        first_flight = self.get_first_flight()
+        if not first_flight:
+            raise ValueError("Group has no flights to calculate full payment deadline.")
+        return first_flight.departure_datetime - timedelta(
+            hours=self.full_payment_deadline
+        )
+
     def save(self, *args, **kwargs):
         should_invalidate_cache = False
         if self.pk:
@@ -90,12 +111,6 @@ class GroupBookingDetail(models.Model):
     adult_price_per_seat = models.DecimalField(max_digits=10, decimal_places=2)
     child_price_per_seat = models.DecimalField(max_digits=10, decimal_places=2)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    token_payment_deadline = models.PositiveIntegerField(
-        validators=[MinValueValidator(1)],
-    )
-    full_payment_deadline = models.PositiveIntegerField(
-        validators=[MinValueValidator(1)],
-    )
 
     class Meta:
         db_table = "group_booking_details"
@@ -189,6 +204,7 @@ class Flight(models.Model):
 
     class Meta:
         db_table = "flights"
+        ordering = ["departure_datetime"]
 
     def __str__(self):
         return f"{self.flight_number} ({self.origin} → {self.destination})"

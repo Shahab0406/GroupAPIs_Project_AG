@@ -2,10 +2,11 @@ from dataclasses import dataclass
 
 from dataclasses_json import dataclass_json
 
-from groups_flights.models import GroupBookingDetail
+from groups_flights.models import GroupBookingDetail, GroupFlightsInvoice
 from groups_flights.utils import CurrencyConvert
 
 from .group import GroupSummaryResponse
+from .invoice import GroupFlightsInvoiceResponse
 
 
 @dataclass_json
@@ -18,15 +19,15 @@ class GroupBookingDetailResponse:
     adult_price_per_seat: CurrencyConvert
     child_price_per_seat: CurrencyConvert | None
     total_amount: CurrencyConvert
-    token_payment_deadline: int
-    full_payment_deadline: int
     group: GroupSummaryResponse
+    invoices: list[GroupFlightsInvoiceResponse]
 
     @classmethod
     def from_model(
         cls,
         booking: GroupBookingDetail,
         group: GroupSummaryResponse,
+        invoices: list[GroupFlightsInvoice],
     ) -> "GroupBookingDetailResponse":
         currency = group.selling_currency
         return cls(
@@ -43,7 +44,8 @@ class GroupBookingDetailResponse:
                 currency,
             ),
             total_amount=CurrencyConvert.from_amount(booking.total_amount, currency),
-            token_payment_deadline=booking.token_payment_deadline,
-            full_payment_deadline=booking.full_payment_deadline,
             group=group,
+            invoices=[
+                GroupFlightsInvoiceResponse.from_model(invoice) for invoice in invoices
+            ],
         )
