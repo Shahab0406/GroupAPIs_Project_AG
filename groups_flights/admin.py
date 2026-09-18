@@ -122,7 +122,7 @@ class FlightInline(admin.TabularInline):
         "airline",
     )
 
-    # readonly_fields = ("airline")
+    readonly_fields = ("airline",)
 
     def get_media(self, request):
         media = super().get_media(request)
@@ -142,6 +142,8 @@ class FlightAdmin(admin.ModelAdmin):
     )
     list_filter = ("travel_class", "meal_available")
     search_fields = ("flight_number", "origin", "destination")
+    readonly_fields = ("airline",)
+    
 
     def get_media(self, request):
         media = super().get_media(request)
