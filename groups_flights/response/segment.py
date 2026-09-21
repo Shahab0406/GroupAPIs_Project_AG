@@ -36,7 +36,7 @@ class SegmentResponse:
 
     @classmethod
     def from_model(cls, segment: Segment) -> "SegmentResponse":
-        return cls(
+        return SegmentResponse(
             id=segment.id,
             flight_number=segment.flight_number,
             origin=segment.origin,

@@ -7,26 +7,20 @@ from groups_flights.exceptions import InsufficientSeatsError
 from groups_flights.models import Group, GroupBookingDetail, GroupFlightsInvoice
 from groups_flights.request.booking_request import BookingRequest
 from groups_flights.response import GroupBookingDetailResponse
-from groups_flights.response.group import GroupSummaryResponse
-from groups_flights.services.group_service import ORDERED_FLIGHTS, ORDERED_GROUP_FLIGHTS
 from groups_flights.utils import BookingStatus
 
 
 class BookingService:
     @staticmethod
-    def _create_booking_invoices(
-        booking: GroupBookingDetail,
-        group: Group,
-    ) -> list[GroupFlightsInvoice]:
-        token_invoice = GroupFlightsInvoice.objects.create(
+    def _create_booking_invoices(booking: GroupBookingDetail, group: Group) -> None:
+        GroupFlightsInvoice.objects.create(
             booking_details=booking,
             payment_deadline=group.get_token_payment_deadline(),
         )
-        full_payment_invoice = GroupFlightsInvoice.objects.create(
+        GroupFlightsInvoice.objects.create(
             booking_details=booking,
             payment_deadline=group.get_full_payment_deadline(),
         )
-        return [token_invoice, full_payment_invoice]
 
     def create_booking(self, booking_request: BookingRequest) -> dict:
         if booking_request.adult_seats_requested < 0 or booking_request.child_seats_requested < 0:
@@ -41,12 +35,28 @@ class BookingService:
         with transaction.atomic():
             group = (
                 Group.objects.select_for_update()
-                .prefetch_related(ORDERED_FLIGHTS)
+                .prefetch_related("flights")
                 .filter(pk=booking_request.group_id, is_active=True)
                 .first()
             )
             if not group:
                 return None
+
+            if (
+                booking_request.adult_seats_requested > 0
+                and group.selling_price_per_seat_adult <= 0
+            ):
+                raise ValueError(
+                    "Adult seats cannot be booked when the adult selling price is zero."
+                )
+
+            if (
+                booking_request.child_seats_requested > 0
+                and group.selling_price_per_seat_child <= 0
+            ):
+                raise ValueError(
+                    "Child seats cannot be booked when the child selling price is zero."
+                )
 
             if booking_request.adult_seats_requested > group.available_adult_seats:
                 raise InsufficientSeatsError(
@@ -79,7 +89,7 @@ class BookingService:
                 total_amount=total_amount,
             )
 
-            invoices = self._create_booking_invoices(booking, group)
+            self._create_booking_invoices(booking, group)
 
             group.available_adult_seats -= booking_request.adult_seats_requested
             group.available_child_seats -= booking_request.child_seats_requested
@@ -90,11 +100,23 @@ class BookingService:
 
         booking = (
             GroupBookingDetail.objects.select_related("group")
-            .prefetch_related(ORDERED_GROUP_FLIGHTS)
+            .prefetch_related("group__flights", "invoices")
             .get(pk=booking.pk)
         )
-        return GroupBookingDetailResponse.from_model(
-            booking,
-            group=GroupSummaryResponse.from_model(booking.group),
-            invoices=invoices,
-        ).to_dict()
+        return self._serialize_booking(booking)
+
+    @staticmethod
+    def _serialize_booking(booking: GroupBookingDetail) -> dict:
+        return GroupBookingDetailResponse.from_model(booking).to_dict()
+
+    def get_booking_detail(self, booking_id: int) -> dict | None:
+        booking = (
+            GroupBookingDetail.objects.select_related("group")
+            .prefetch_related("group__flights", "invoices")
+            .filter(pk=booking_id)
+            .first()
+        )
+        if not booking:
+            return None
+
+        return self._serialize_booking(booking)

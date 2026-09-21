@@ -16,11 +16,11 @@ def _encode_datetime(value: datetime) -> str:
 @dataclass
 class GroupFlightsInvoiceResponse:
     id: int
-    invoice_number: str | None
     invoice_status: str
     payment_status: str
-    financial_profile: str | None
-    payment_deadline: datetime | None = field(
+    invoice_number: str = None
+    financial_profile: str = None
+    payment_deadline: datetime = field(
         default=None,
         metadata=config(
             encoder=lambda value: _encode_datetime(value) if value else None,
@@ -42,48 +42,12 @@ class GroupFlightsInvoiceResponse:
 
 @dataclass_json
 @dataclass
-class InvoiceGroupContextResponse:
-    id: int
-    invoice_number: str | None
-    group_name: str | None
-
-
-@dataclass_json
-@dataclass
-class InvoiceBookingContextResponse:
-    id: int
-    group_name: str | None
-    status: str
-
-
-@dataclass_json
-@dataclass
-class GroupInvoiceDetailResponse:
-    group_invoice: GroupFlightsInvoiceResponse
-    group: InvoiceGroupContextResponse | None
-    booking_details: InvoiceBookingContextResponse | None
+class PayNowResponse:
+    invoice: GroupFlightsInvoiceResponse
 
     @classmethod
-    def from_model(cls, invoice: GroupFlightsInvoice) -> "GroupInvoiceDetailResponse":
-        group = getattr(invoice.booking_details, "group", None)
+    def from_model(cls, invoice: GroupFlightsInvoice) -> "PayNowResponse":
         return cls(
-            group_invoice=GroupFlightsInvoiceResponse.from_model(invoice),
-            group=(
-                InvoiceGroupContextResponse(
-                    id=group.id,
-                    invoice_number=invoice.invoice_number,
-                    group_name=group.group_name,
-                )
-                if group
-                else None
-            ),
-            booking_details=(
-                InvoiceBookingContextResponse(
-                    id=invoice.booking_details.id,
-                    group_name=group.group_name if group else None,
-                    status=invoice.booking_details.status,
-                )
-                if invoice.booking_details
-                else None
-            ),
+            invoice=GroupFlightsInvoiceResponse.from_model(invoice),
         )
+

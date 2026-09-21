@@ -11,8 +11,9 @@ def is_superuser_and_staff(user):
 
 from .exceptions import InsufficientSeatsError
 from .request.booking_request import BookingRequest
+from .request.pay_now_request import PayNowRequest
 from .response import CoreResponse, CoreStatus
-from .services import BookingService, GroupService, SegmentService
+from .services import BookingService, GroupInvoiceService, GroupService, SegmentService
 
 
 class GroupView:
@@ -155,3 +156,62 @@ class BookingView:
             error={},
         )
         return CoreResponse.send_response(response, http_status=HTTPStatus.CREATED)
+
+    @staticmethod
+    def detail(request, pk):
+        booking_data = BookingView.service.get_booking_detail(pk)
+
+        if booking_data is None:
+            response = CoreResponse.generate_response(
+                success=False,
+                message="Booking not found.",
+                status=CoreStatus.Error.value,
+                data={},
+                error={"detail": f"No booking exists with id {pk}."},
+            )
+            return CoreResponse.send_error_response(response, status=HTTPStatus.NOT_FOUND)
+
+        return CoreResponse.success_response(
+            message="Booking retrieved successfully.",
+            data=booking_data,
+        )
+
+
+class PaymentView:
+    service = GroupInvoiceService()
+
+    @staticmethod
+    def pay_now(request):
+        
+        pay_now_request = PayNowRequest.from_json(request.body.decode())
+       
+        try:
+            invoice_data = PaymentView.service.pay_now(pay_now_request.booking_id)
+        except ValueError as exc:
+            response = CoreResponse.generate_response(
+                success=False,
+                message="Unable to process payment.",
+                status=CoreStatus.Error.value,
+                data={},
+                error={"detail": str(exc)},
+            )
+            return CoreResponse.send_error_response(response, status=HTTPStatus.BAD_REQUEST)
+
+        if invoice_data is None:
+            response = CoreResponse.generate_response(
+                success=False,
+                message="Booking not found.",
+                status=CoreStatus.Error.value,
+                data={},
+                error={
+                    "detail": (
+                        f"No booking exists with id {pay_now_request.booking_id}."
+                    ),
+                },
+            )
+            return CoreResponse.send_error_response(response, status=HTTPStatus.NOT_FOUND)
+
+        return CoreResponse.success_response(
+            message="Payment completed successfully.",
+            data=invoice_data,
+        )

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from dataclasses_json import dataclass_json
 
-from groups_flights.models import GroupBookingDetail, GroupFlightsInvoice
+from groups_flights.models import GroupBookingDetail
 from groups_flights.utils import CurrencyConvert
 
 from .group import GroupSummaryResponse
@@ -17,20 +17,16 @@ class GroupBookingDetailResponse:
     adult_seats_requested: int
     child_seats_requested: int
     adult_price_per_seat: CurrencyConvert
-    child_price_per_seat: CurrencyConvert | None
     total_amount: CurrencyConvert
     group: GroupSummaryResponse
     invoices: list[GroupFlightsInvoiceResponse]
+    child_price_per_seat: CurrencyConvert = None
 
     @classmethod
-    def from_model(
-        cls,
-        booking: GroupBookingDetail,
-        group: GroupSummaryResponse,
-        invoices: list[GroupFlightsInvoice],
-    ) -> "GroupBookingDetailResponse":
+    def from_model(cls, booking: GroupBookingDetail) -> "GroupBookingDetailResponse":
+        group = GroupSummaryResponse.from_model(booking.group)
         currency = group.selling_currency
-        return cls(
+        return GroupBookingDetailResponse(
             id=booking.id,
             status=booking.status,
             adult_seats_requested=booking.adult_seats_requested,
@@ -46,6 +42,7 @@ class GroupBookingDetailResponse:
             total_amount=CurrencyConvert.from_amount(booking.total_amount, currency),
             group=group,
             invoices=[
-                GroupFlightsInvoiceResponse.from_model(invoice) for invoice in invoices
+                GroupFlightsInvoiceResponse.from_model(invoice)
+                for invoice in booking.invoices.all()
             ],
         )

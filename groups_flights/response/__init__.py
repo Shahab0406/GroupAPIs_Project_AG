@@ -2,7 +2,7 @@ from .booking import GroupBookingDetailResponse
 from .core_response import CoreResponse, CoreResponseData, CoreStatus
 from .flight import FlightResponse
 from .group import GroupResponse
-from .invoice import GroupFlightsInvoiceResponse, GroupInvoiceDetailResponse
+from .invoice import GroupFlightsInvoiceResponse, PayNowResponse
 from .segment import SegmentResponse
 
 __all__ = [
@@ -12,7 +12,7 @@ __all__ = [
     "FlightResponse",
     "GroupBookingDetailResponse",
     "GroupFlightsInvoiceResponse",
-    "GroupInvoiceDetailResponse",
+    "PayNowResponse",
     "GroupResponse",
     "SegmentResponse",
 ]

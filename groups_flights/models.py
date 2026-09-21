@@ -65,7 +65,7 @@ class Group(models.Model):
         return from_datetime + timedelta(hours=self.token_payment_deadline)
 
     def get_first_flight(self) -> "Flight | None":
-        return self.flights.order_by("departure_datetime").first()
+        return self.flights.first()
 
     def get_full_payment_deadline(self) -> datetime:
         first_flight = self.get_first_flight()
@@ -174,7 +174,8 @@ class GroupFlightsInvoice(models.Model):
     payment_deadline=models.DateTimeField(null=True, blank=True)
 
     class Meta:
-            db_table = "group_flights_invoices"
+        db_table = "group_flights_invoices"
+        ordering = ["payment_deadline"]
 
     def __str__(self):
         return f"({self.booking_details.id}) {self.invoice_number}"
