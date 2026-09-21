@@ -48,7 +48,9 @@ class GroupService:
         if cached is not None:
             return cached
 
-        group = Group.objects.prefetch_related("flights").filter(pk=pk, is_active=True).first()
+        group = Group.objects.prefetch_related("flights").filter(
+            pk=pk, is_active=True
+        ).first()
         if not group:
             return None
 

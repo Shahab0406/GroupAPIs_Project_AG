@@ -1,47 +1,59 @@
-from groups_flights.models import GroupFlightsInvoice, Group
-from groups_flights.response import GroupResponse
+from decimal import Decimal
+
+from django.db import transaction
+
+from groups_flights.models import GroupBookingDetail, GroupFlightsInvoice
+from groups_flights.response.invoice import PayNowResponse
+from groups_flights.utils import BookingStatus
+from groups_flights.utils.status import PaymentStatus
+
 
 class GroupInvoiceService:
+    # Temporary in-memory balance until wallet integration is added.
+    available_balance = Decimal("1400.00")
 
-    def _serialize_invoice(self, invoice: GroupFlightsInvoice) -> dict:
-        group_obj = getattr(invoice.booking_details, "group", None)
+    @staticmethod
+    def _get_next_unpaid_invoice(
+        booking: GroupBookingDetail,
+    ) -> GroupFlightsInvoice | None:
+        return booking.invoices.filter(payment_status=PaymentStatus.UNPAID).first()
 
-        return {
-            "group_invoice": {
-                "id": invoice.id,
-                "invoice_number": invoice.invoice_number,
-                "invoice_status": invoice.invoice_status,
-                "payment_status": invoice.payment_status,
-                "financial_profile": invoice.financial_profile,
-            },
-            "group": (
-                {
-                    "id": group_obj.id,
-                    "invoice_number": invoice.invoice_number,
-                    "group_name": getattr(group_obj, "group_name", None),
-                }
-                if group_obj
-                else None
-            ),
-            "booking_details": (
-                {
-                    "id": invoice.booking_details.id,
-                    "group_name": getattr(group_obj, "group_name", None),
-                    "status": getattr(invoice.booking_details, "status", None),
-                }
-                if invoice.booking_details
-                else None
-            ),
-        }
+    @staticmethod
+    def _get_payment_amount(booking: GroupBookingDetail) -> Decimal:
+        paid_invoices = booking.invoices.filter(
+            payment_status=PaymentStatus.PAID,
+        ).count()
+        if paid_invoices == 0:
+            return booking.group.token_amount
+        return booking.total_amount - booking.group.token_amount
 
-    def get_all_data_from_group_invoice(self, pk: int) -> dict | None:
-        invoice = (
-            GroupFlightsInvoice.objects.select_related("booking_details__group")
-            .filter(pk=pk)
+    def pay_now(self, booking_id: int) -> dict | None:
+        booking = (
+            GroupBookingDetail.objects.select_related("group")
+            .filter(pk=booking_id)
             .first()
         )
-
-        if not invoice:
+        if not booking:
             return None
 
-        return self._serialize_invoice(invoice)
+        if booking.status != BookingStatus.ON_HOLD:
+            raise ValueError("Booking is not active for payment.")
+
+        invoice = self._get_next_unpaid_invoice(booking)
+        if not invoice:
+            raise ValueError("All payments for this booking have already been completed.")
+
+        payment_amount = self._get_payment_amount(booking)
+        if GroupInvoiceService.available_balance < payment_amount:
+            raise ValueError(
+                "Insufficient balance. "
+                f"Available: {GroupInvoiceService.available_balance}, "
+                f"required: {payment_amount}."
+            )
+
+        with transaction.atomic():
+            GroupInvoiceService.available_balance -= payment_amount
+            invoice.payment_status = PaymentStatus.PAID
+            invoice.save(update_fields=["payment_status"])
+
+        return PayNowResponse.from_model(invoice).to_dict()
