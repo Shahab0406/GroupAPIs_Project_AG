@@ -184,8 +184,15 @@ class Flight(models.Model):
         choices=TravelClass.choices,
         default=TravelClass.ECONOMY,
     )
-    baggage_allowance = models.CharField(max_length=100)
+    baggage_allowance = models.CharField(max_length=100,null=True,blank=True)
     meal_available = models.BooleanField(default=False)
+    airline = models.ForeignKey(
+        "Airline",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="flights",
+    )
 
     class Meta:
         db_table = "flights"
@@ -212,3 +219,21 @@ class Segment(models.Model):
     def __str__(self):
         return self.flight_number
 
+
+class Airline(models.Model):
+    name = models.CharField(max_length=100)
+    alias = models.CharField(max_length=100, null=True, blank=True)
+    slug = models.CharField(max_length=100, null=True, blank=True)
+    airline_numeric_code = models.CharField(max_length=3, null=True, blank=True, default='XYZ')
+    code = models.CharField(max_length=50)
+    color = models.CharField(max_length=10, null=True, blank=True)
+    has_custom_pricing = models.BooleanField(default=False)
+    logo = models.CharField(max_length=255, null=True, blank=True)
+    is_enabled = models.BooleanField(default=False)
+
+    class Meta:
+            db_table = "airlines"
+    
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+    
