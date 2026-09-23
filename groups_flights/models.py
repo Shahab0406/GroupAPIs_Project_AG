@@ -184,7 +184,7 @@ class Flight(models.Model):
         choices=TravelClass.choices,
         default=TravelClass.ECONOMY,
     )
-    baggage_allowance = models.CharField(max_length=100,null=True,blank=True,default="20kg")
+    baggage_allowance = models.CharField(max_length=100,null=True,blank=True)
     meal_available = models.BooleanField(default=False)
     airline = models.ForeignKey(
         "Airline",

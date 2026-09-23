@@ -38,7 +38,6 @@ class SegmentService:
 
     #========================================================================================
     def get_airlineinfo_by_carrier_code(self, carrier_code: str) -> dict | None:
-        """Fetch airline info by carrier code."""
         if not carrier_code:
             return None
 
@@ -54,10 +53,8 @@ class SegmentService:
     #========================================================================================
     
     def get_flight_info_autofill(self, raw_flight_number: str) -> dict | None:
-        """Main method for autofill: handles normalization, segment lookup, and airline fallback."""
         formatted_number, carrier_code = self.normalize_flight_number(raw_flight_number)
 
-        # 1. Try fetching existing segment using formatted string ("ZH-306")
         segment_data = self.get_segment_by_flight_number(formatted_number)
         airline_data = self.get_airlineinfo_by_carrier_code(carrier_code)
         if segment_data:
