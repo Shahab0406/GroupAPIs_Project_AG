@@ -36,7 +36,7 @@ class FlightResponse:
 
     @classmethod
     def from_model(cls, flight: Flight) -> "FlightResponse":
-        return cls(
+        return FlightResponse(
             flight_number=flight.flight_number,
             origin=flight.origin,
             destination=flight.destination,

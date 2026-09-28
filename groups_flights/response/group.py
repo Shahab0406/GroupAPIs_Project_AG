@@ -19,16 +19,16 @@ class GroupSummaryResponse:
     available_child_seats: int
     selling_currency: str
     selling_price_per_seat_adult: CurrencyConvert
-    selling_price_per_seat_child: CurrencyConvert | None
     token_amount: CurrencyConvert
     token_payment_deadline: int
     full_payment_deadline: int
     is_active: bool
     flights: list[FlightResponse]
+    selling_price_per_seat_child: CurrencyConvert = None
 
     @classmethod
     def from_model(cls, group: Group) -> "GroupSummaryResponse":
-        return cls(
+        return GroupSummaryResponse(
             id=group.id,
             group_name=group.group_name,
             adult_seats=group.adult_seats,
@@ -69,14 +69,14 @@ class GroupResponse:
     token_amount: CurrencyConvert
     selling_currency: str
     selling_price_per_seat_adult: CurrencyConvert
-    selling_price_per_seat_child: CurrencyConvert | None
     selling_price_per_seat_infant: CurrencyConvert
     is_active: bool
     flights: list[FlightResponse]
+    selling_price_per_seat_child: CurrencyConvert = None
 
     @classmethod
     def from_model(cls, group: Group) -> "GroupResponse":
-        return cls(
+        return GroupResponse(
             id=group.id,
             group_name=group.group_name,
             adult_seats=group.adult_seats,

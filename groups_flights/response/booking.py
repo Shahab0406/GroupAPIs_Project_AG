@@ -6,6 +6,7 @@ from groups_flights.models import GroupBookingDetail
 from groups_flights.utils import CurrencyConvert
 
 from .group import GroupSummaryResponse
+from .invoice import GroupFlightsInvoiceResponse
 
 
 @dataclass_json
@@ -16,20 +17,16 @@ class GroupBookingDetailResponse:
     adult_seats_requested: int
     child_seats_requested: int
     adult_price_per_seat: CurrencyConvert
-    child_price_per_seat: CurrencyConvert | None
     total_amount: CurrencyConvert
-    token_payment_deadline: int
-    full_payment_deadline: int
     group: GroupSummaryResponse
+    invoices: list[GroupFlightsInvoiceResponse]
+    child_price_per_seat: CurrencyConvert = None
 
     @classmethod
-    def from_model(
-        cls,
-        booking: GroupBookingDetail,
-        group: GroupSummaryResponse,
-    ) -> "GroupBookingDetailResponse":
+    def from_model(cls, booking: GroupBookingDetail) -> "GroupBookingDetailResponse":
+        group = GroupSummaryResponse.from_model(booking.group)
         currency = group.selling_currency
-        return cls(
+        return GroupBookingDetailResponse(
             id=booking.id,
             status=booking.status,
             adult_seats_requested=booking.adult_seats_requested,
@@ -43,7 +40,9 @@ class GroupBookingDetailResponse:
                 currency,
             ),
             total_amount=CurrencyConvert.from_amount(booking.total_amount, currency),
-            token_payment_deadline=booking.token_payment_deadline,
-            full_payment_deadline=booking.full_payment_deadline,
             group=group,
+            invoices=[
+                GroupFlightsInvoiceResponse.from_model(invoice)
+                for invoice in booking.invoices.all()
+            ],
         )

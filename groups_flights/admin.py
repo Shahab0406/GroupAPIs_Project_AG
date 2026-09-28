@@ -178,8 +178,6 @@ class GroupBookingDetailAdmin(admin.ModelAdmin):
         "adult_seats_requested",
         "child_seats_requested",
         "total_amount",
-        "token_payment_deadline",
-        "full_payment_deadline",
     )
     list_filter = ("status",)
     search_fields = ("group__group_name", "group__pnr")
